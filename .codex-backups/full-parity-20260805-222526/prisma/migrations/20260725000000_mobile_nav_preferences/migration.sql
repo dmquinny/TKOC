@@ -1,2 +1,0 @@
-ALTER TABLE `User`
-  ADD COLUMN `mobileNav` VARCHAR(255) NULL;

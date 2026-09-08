@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
+# dependencies (any depth: root and control/)
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files: real values never go in git, but the templates do
 .env*
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel
@@ -44,3 +46,12 @@ next-env.d.ts
 
 # local deploy target for scripts/update.ps1
 deploy.config.json
+
+# historical snapshots kept on disk for reference; not part of the build
+/.codex-backups/
+
+# scratch space
+/tmp/
+
+# per-machine tool settings
+.claude/settings.local.json
