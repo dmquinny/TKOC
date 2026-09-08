@@ -1,0 +1,63 @@
+{
+  "name": "tkoc-modern",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "check": "tsc --noEmit && eslint .",
+    "parity": "ts-node --project scripts/tsconfig.json scripts/verify-legacy-parity.ts",
+    "hardening": "ts-node --project scripts/tsconfig.json scripts/verify-hardening.ts",
+    "test:regressions": "ts-node --project scripts/tsconfig.json scripts/verify-game-regressions.ts",
+    "test:db": "ts-node --project scripts/tsconfig.json scripts/verify-database-concurrency.ts",
+    "verify": "prisma validate && npm run check && npm run test:unit && npm run parity && npm run hardening && npm run test:regressions",
+    "verify:full": "npm run verify && npm run build && npm audit --omit=dev",
+    "deploy:production": "sh scripts/deploy-production.sh",
+    "db:baseline": "prisma migrate resolve --applied 20260721000000_baseline",
+    "db:recover:audit": "sh scripts/recover-audit-migration.sh --confirm",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "test:unit": "ts-node --project scripts/tsconfig.json tests/index.ts",
+    "update": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update.ps1",
+    "update:server": "sh scripts/update.sh",
+    "rollback:server": "sh scripts/rollback.sh",
+    "status:server": "sh scripts/status.sh",
+    "control:up": "docker compose -f ../docker-compose.yml up -d --build tkoc-control",
+    "control:logs": "docker logs --tail 100 -f tkoc-control"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.9.0",
+    "@prisma/client": "^7.9.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.25.0",
+    "mariadb": "^3.5.3",
+    "next": "^16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.12",
+    "prisma": "^7.9.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "find-my-way": "^9.7.0",
+    "sharp": "^0.35.3",
+    "valibot": "^1.4.2",
+    "postcss": "^8.5.23"
+  }
+}

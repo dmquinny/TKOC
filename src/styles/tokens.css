@@ -1,0 +1,77 @@
+/* Design tokens. Every colour, font, and radius used by the interface is
+   defined here so pages never need literal values. */
+:root {
+  /* Palette */
+  --stone-darkest: #14110c;
+  --stone-dark: #1c1810;
+  --stone: #241f16;
+  --stone-light: #2e2819;
+  --stone-border: #4a3d24;
+  --gold: #c8952f;
+  --gold-bright: #f0c674;
+  --gold-deep: #9c762d;
+  --bronze: #8a6d3b;
+  --parchment: #e8dcc0;
+  --parchment-dim: #b7a882;
+  --parchment-faint: #8f897d;
+  --blood: #8f2d2d;
+  --success: #78d98b;
+  --success-border: #3f8750;
+  --warning: #efc46b;
+  --warning-border: #9a702d;
+  --error: #ff8585;
+  --error-border: #a94040;
+  --info: #8dcbea;
+  --info-border: #3d7796;
+
+  /* Semantic text */
+  --text: var(--parchment);
+  --text-muted: var(--parchment-dim);
+  --text-faint: var(--parchment-faint);
+  --text-on-gold: #2a1e08;
+  --positive: var(--success);
+  --negative: var(--error);
+
+  /* Surfaces and lines */
+  --background: var(--stone-darkest);
+  --foreground: var(--parchment);
+  --surface: var(--stone);
+  --surface-border: var(--stone-border);
+  --surface-raised: rgba(0, 0, 0, 0.22);
+  --surface-sunken: rgba(0, 0, 0, 0.35);
+  --line: rgba(200, 149, 47, 0.14);
+  --line-strong: rgba(200, 149, 47, 0.38);
+  --line-soft: #2a2419;
+
+  /* Inputs */
+  --input-bg: rgba(12, 10, 7, 0.86);
+  --input-bg-focus: rgba(20, 16, 10, 0.96);
+  --input-border: rgba(200, 149, 47, 0.32);
+  --input-text: var(--parchment);
+
+  /* Selection and accents */
+  --primary: var(--gold);
+  --primary-hover: var(--gold-bright);
+  --accent: var(--gold);
+  --accent-bright: var(--gold-bright);
+  --selection-bg: rgba(200, 149, 47, 0.12);
+  --selection-border: var(--gold);
+  --danger-bg: rgba(143, 45, 45, 0.16);
+  --danger-border: #bd5048;
+  --warning-bg: rgba(138, 92, 25, 0.14);
+  --ally: #7ee08a;
+  --enemy: #ff7a7a;
+  --neutral: var(--parchment-dim);
+
+  /* Shape */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --shadow-card: inset 0 0 24px rgba(0, 0, 0, 0.35);
+  --shadow-raised: 0 10px 28px rgba(0, 0, 0, 0.22);
+
+  /* Type */
+  --font-display: var(--font-cinzel), 'Trajan Pro', Georgia, serif;
+  --font-heading: var(--font-display);
+  --font-body: var(--font-garamond), Georgia, 'Times New Roman', serif;
+}

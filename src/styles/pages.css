@@ -1,0 +1,719 @@
+/* Page-level layout classes and small utilities. These replace the inline
+   style objects that previously lived in every dashboard page. */
+
+/* ---------- Layout utilities ---------- */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.page-grid.is-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-grid.is-targets {
+  grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
+}
+
+.page-grid.is-inbox {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.stack-sm {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.row-between {
+  justify-content: space-between;
+}
+
+.divided > * + * {
+  border-top: 1px solid var(--line-soft);
+}
+
+.list-plain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.text-muted { color: var(--text-muted); }
+.text-faint { color: var(--text-faint); }
+.text-gold { color: var(--gold-bright); }
+.text-danger { color: var(--error); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-center { text-align: center; }
+.text-small { font-size: 0.88rem; }
+.mt-0 { margin-top: 0 !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mt-1 { margin-top: 1rem; }
+.mt-2 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 1rem; }
+.mb-2 { margin-bottom: 1.5rem; }
+
+.card-title-rule {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  color: var(--gold);
+  border-bottom: 1px solid var(--stone-border);
+}
+
+.btn-small {
+  min-height: 2.3rem;
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.btn-primary.btn-calm {
+  color: #e2e8f0;
+  border-color: #4a6f93;
+  background:
+    linear-gradient(rgba(58, 85, 112, 0.6), rgba(28, 45, 62, 0.8)),
+    url('/game/ui/btn-bg-2.webp') center / cover no-repeat;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.btn-primary.btn-muted {
+  color: var(--parchment);
+  border-color: #6b6353;
+  background: linear-gradient(180deg, #6b6353, #463f30);
+}
+
+.btn-block {
+  width: 100%;
+  margin: 0;
+}
+
+.choice-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.choice-card {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--stone-border);
+  border-radius: var(--radius);
+  color: inherit;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.choice-card:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.choice-card[aria-checked='true'] {
+  border-color: var(--selection-border);
+  background: var(--selection-bg);
+}
+
+.choice-card:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.choice-card strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+}
+
+.choice-card small {
+  color: var(--text-muted);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--gold-bright);
+  background: var(--selection-bg);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+}
+
+/* ---------- Overview ---------- */
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.overview-grid > .game-panel,
+.overview-grid .stack > .game-panel {
+  margin-bottom: 0;
+}
+
+.news-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.news-list .event-item {
+  margin: 0;
+}
+
+.news-time {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-faint);
+  font-size: 0.74rem;
+  font-style: normal;
+}
+
+/* ---------- Military ---------- */
+.training-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.training-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  font-size: 0.92rem;
+}
+
+.training-list strong {
+  color: var(--gold-bright);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- War Room ---------- */
+.deploy-target {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: var(--selection-bg);
+}
+
+.deploy-target strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.unit-rows {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.unit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.unit-row > div {
+  min-width: 0;
+}
+
+.unit-row strong {
+  color: var(--text);
+}
+
+.unit-row small {
+  display: block;
+  color: var(--text-muted);
+}
+
+.unit-row input {
+  width: 110px;
+  flex: 0 0 110px;
+}
+
+.deploy-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.deploy-summary b {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.army-list > li {
+  padding: 0.75rem 0;
+}
+
+.army-list strong {
+  color: var(--gold-bright);
+}
+
+/* ---------- Science ---------- */
+.research-active {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-left: 3px solid var(--gold);
+}
+
+.research-active img {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  object-fit: cover;
+  border: 1px solid var(--stone-border);
+  border-radius: var(--radius-sm);
+}
+
+.research-active strong {
+  display: block;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.research-active small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Explore ---------- */
+.explore-intro p {
+  max-width: 850px;
+  margin: 0 auto;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.explore-intro p + p {
+  margin-top: 0.5rem;
+}
+
+.explore-input {
+  width: 110px;
+}
+
+/* ---------- Kingdom ---------- */
+.kingdom-banner {
+  text-align: center;
+}
+
+.kingdom-banner img {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
+.kingdom-banner p {
+  margin: 0.75rem 0 0;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.diplomacy-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.diplomacy-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.diplomacy-form select {
+  flex: 1 1 14rem;
+}
+
+.kingdom-news > div {
+  padding: 0.65rem 0;
+}
+
+.kingdom-news small {
+  color: var(--text-faint);
+}
+
+/* ---------- Chat ---------- */
+.chat-shell {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 52vh;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.chat-line {
+  line-height: 1.4;
+}
+
+.chat-author {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+}
+
+.chat-time {
+  margin-left: 0.5rem;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+.chat-text {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.chat-composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--stone-border);
+}
+
+.chat-composer input {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-composer .btn-primary {
+  margin: 0;
+}
+
+/* ---------- Messages ---------- */
+.inbox-item {
+  padding: 0.6rem 0;
+}
+
+.inbox-item .message-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.inbox-subject {
+  color: var(--text-muted);
+}
+
+.inbox-subject.is-unread {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.inbox-from {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.inbox-body {
+  margin-top: 0.5rem;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.compose-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.compose-form .btn-primary {
+  margin: 0;
+}
+
+/* ---------- Forums ---------- */
+.thread-row {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.thread-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.thread-row strong {
+  color: var(--gold-bright);
+}
+
+.thread-row span {
+  margin-left: 0.7rem;
+  color: var(--text-faint);
+}
+
+.post {
+  padding: 1rem 0;
+}
+
+.post-author {
+  color: var(--gold-bright);
+}
+
+.post-time {
+  margin-left: 0.7rem;
+  color: var(--text-faint);
+}
+
+.post-body {
+  white-space: pre-wrap;
+}
+
+/* ---------- Guide ---------- */
+.guide-text {
+  margin-top: 0;
+  color: var(--text);
+}
+
+.guide-note {
+  margin-top: 0;
+  color: var(--text-muted);
+}
+
+.guide-highlight {
+  margin-top: 0;
+  color: var(--gold-bright);
+}
+
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.guide-table th {
+  padding: 0.5rem;
+  color: var(--gold);
+  text-align: left;
+  border-bottom: 1px solid var(--stone-border);
+}
+
+.guide-table td {
+  padding: 0.5rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.guide-table td:first-child {
+  color: var(--gold-bright);
+}
+
+.guide-table .guide-term {
+  width: 130px;
+  font-family: var(--font-display);
+}
+
+.guide-sub {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.guide-list {
+  margin-top: 0;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+/* ---------- Preferences ---------- */
+.prefs-card > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.prefs-card .btn-primary {
+  margin: auto 0 0;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+/* ---------- Hall of Fame ---------- */
+.hof-first {
+  background: var(--selection-bg) !important;
+}
+
+.hof-first td:first-child {
+  color: var(--gold-bright);
+}
+
+/* ---------- Province founding ---------- */
+.race-stats {
+  color: var(--gold);
+}
+
+.gender-options {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.gender-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--parchment);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.kingdom-extra {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.kingdom-extra p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.landing-actions {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .page-grid,
+  .page-grid.is-two,
+  .page-grid.is-targets,
+  .page-grid.is-inbox {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .unit-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .unit-row input {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  /* The chat fills the space between the 62px header and the fixed bottom
+     navigation (about 5rem with its padding), so the composer stays visible. */
+  .dashboard-content:has(> .chat-page) {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .chat-page {
+    height: calc(100dvh - 62px - 0.75rem - 5rem - env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-page .mobile-page-context,
+  .chat-page .page-banner {
+    display: none;
+  }
+
+  .chat-page .section-tabs,
+  .chat-page .feedback-notice {
+    flex: 0 0 auto;
+  }
+
+  .chat-page .chat-shell {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .chat-messages {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    padding: 0.8rem;
+  }
+
+  .chat-composer {
+    flex: 0 0 auto;
+    padding: 0.65rem;
+    background: rgba(12, 10, 7, 0.96);
+  }
+
+  .diplomacy-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .diplomacy-form .btn-primary {
+    width: 100%;
+    margin: 0;
+  }
+
+  .inbox-item .message-summary {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}
+
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }

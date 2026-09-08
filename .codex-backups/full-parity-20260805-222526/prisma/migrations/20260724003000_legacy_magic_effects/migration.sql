@@ -1,0 +1,6 @@
+ALTER TABLE `Effect`
+  MODIFY `type` VARCHAR(40) NOT NULL,
+  ADD COLUMN `sourcePID` INTEGER NULL,
+  ADD COLUMN `wizards` INTEGER NOT NULL DEFAULT 0;
+
+CREATE INDEX `Effect_sourcePID_idx` ON `Effect`(`sourcePID`);

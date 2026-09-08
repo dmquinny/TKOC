@@ -1,0 +1,143 @@
+/* Dashboard shell: content column, page banners, stat cards. */
+/* ---------- Dashboard ---------- */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-image:
+    linear-gradient(rgba(14, 11, 7, 0.95), rgba(14, 11, 7, 0.98)),
+    url('/game/bg/castle.webp');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.dashboard-content {
+  flex: 1;
+  min-width: 0;
+  max-width: 1920px;
+  padding: 2rem 2.5rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--stone-border);
+}
+
+.dashboard-header h1 {
+  font-size: 2.4rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Illustrated page-header banner */
+.page-banner {
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--stone-border);
+  border-bottom: 3px solid var(--gold);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--stone-dark);
+}
+
+.mobile-page-context {
+  display: none;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+.page-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--banner, none);
+  background-size: cover;
+  background-position: center 28%;
+  /* Sepia toning unifies the mismatched original art toward the gold palette. */
+  filter: sepia(0.4) saturate(0.85) contrast(1.05) brightness(0.85);
+  z-index: 0;
+}
+
+.page-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(14, 11, 7, 0.96) 0%, rgba(14, 11, 7, 0.6) 55%, rgba(14, 11, 7, 0.32) 100%),
+    linear-gradient(0deg, rgba(14, 11, 7, 0.92) 0%, rgba(14, 11, 7, 0.05) 65%);
+  z-index: 1;
+}
+
+.page-banner > * {
+  position: relative;
+  z-index: 2;
+}
+
+.page-banner h1 {
+  font-size: clamp(1.7rem, 2.5vw, 2.15rem);
+  line-height: 1.15;
+  margin: 0 0 0.15rem;
+}
+
+.page-banner .subtitle {
+  max-width: 72ch;
+  margin: 0;
+}
+
+.networth-badge {
+  background: rgba(200, 149, 47, 0.12);
+  border: 1px solid var(--gold);
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--gold-bright);
+  max-width: 100%;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background: linear-gradient(180deg, var(--stone-light), var(--stone-dark));
+  border: 1px solid var(--stone-border);
+  border-top: 2px solid var(--gold);
+  border-radius: 5px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: 0;
+}
+
+.stat-card:hover {
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35), 0 7px 18px rgba(0, 0, 0, 0.24);
+  border-color: rgba(200, 149, 47, 0.72);
+}
+
+.stat-card > h2 {
+  margin-bottom: 0.85rem;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+}
+
+.stat-card > h3 {
+  line-height: 1.25;
+}
+

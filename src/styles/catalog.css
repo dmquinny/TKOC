@@ -1,0 +1,965 @@
+/* Shared interface components introduced with the dashboard redesign:
+   skeletons, the world clock, navigation badges, resource deltas, catalog
+   cards, target pickers, battle reports, the age outlook, and rankings. */
+
+/* ---------- Loading skeleton ---------- */
+.skeleton-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(240, 198, 116, 0.07), transparent);
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.skeleton-banner {
+  min-height: 120px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.skeleton-card {
+  min-height: 160px;
+}
+
+/* ---------- World clock ---------- */
+.tick-countdown {
+  display: grid;
+  gap: 0.1rem;
+  text-align: center;
+}
+
+.tick-countdown small {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.56rem;
+  font-weight: 400;
+  letter-spacing: 1.3px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.tick-countdown strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tick-countdown.is-processing strong {
+  color: var(--warning);
+  font-size: 0.8rem;
+}
+
+.tick-countdown.is-compact strong {
+  font-size: 0.8rem;
+}
+
+.sidebar-clock .tick-countdown {
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.sidebar-outlook {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.4px;
+  text-align: center;
+}
+
+.sidebar-outlook.is-apocalypse {
+  color: var(--enemy);
+}
+
+/* ---------- Navigation badges ---------- */
+.nav-badge {
+  display: inline-grid;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-left: auto;
+  padding-inline: 0.3rem;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--text-on-gold);
+  background: var(--gold);
+  font: 700 0.68rem/1 var(--font-body);
+  font-style: normal;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+.mobile-bottom-nav a,
+.mobile-bottom-nav button {
+  position: relative;
+}
+
+.mobile-bottom-nav .nav-badge {
+  position: absolute;
+  top: 0.2rem;
+  right: 18%;
+  margin: 0;
+}
+
+.mobile-bottom-nav .nav-dot {
+  position: absolute;
+  top: 0.4rem;
+  right: 24%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 6px rgba(240, 198, 116, 0.8);
+}
+
+.mobile-menu-grid a .nav-badge,
+.mobile-menu-grid a .nav-dot {
+  position: static;
+  margin-left: auto;
+}
+
+/* ---------- Resource cards and deltas ---------- */
+.resource-card .stat-value {
+  line-height: 1.1;
+}
+
+.resource-gold .resource-icon { color: #c8952f; }
+.resource-food .resource-icon { color: #d1b26f; }
+.resource-metal .resource-icon { color: #9a9a9a; }
+.resource-peasants .resource-icon { color: #e5d1b8; }
+.resource-land .resource-icon { color: #b97a44; }
+.resource-mana .resource-icon { color: #7db8e8; }
+.resource-influence .resource-icon { color: #c9a0dc; }
+.resource-networth .resource-icon { color: var(--gold-bright); }
+
+.delta {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.delta.is-positive { color: var(--positive); }
+.delta.is-negative { color: var(--negative); }
+
+.delta.is-flat,
+.delta.is-unknown {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.resource-hint {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.resource-card.is-warning {
+  border-top-color: var(--error);
+}
+
+.resource-card.is-warning .resource-hint {
+  color: var(--warning);
+}
+
+/* ---------- Section tabs ---------- */
+.section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.section-tabs button {
+  flex: 1 1 auto;
+  min-height: 2.6rem;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font: 600 0.78rem/1 var(--font-display);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: transparent;
+  cursor: pointer;
+}
+
+.section-tabs button:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.section-tabs button.is-active {
+  color: var(--text-on-gold);
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.section-tabs em {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  font-style: normal;
+}
+
+/* ---------- Catalog cards ---------- */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.catalog-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--stone-light), var(--stone-dark));
+  border: 1px solid var(--stone-border);
+  border-top: 2px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.catalog-card:hover {
+  border-color: rgba(200, 149, 47, 0.72);
+}
+
+.catalog-card.is-muted {
+  opacity: 0.7;
+}
+
+.catalog-card.is-highlighted {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(200, 149, 47, 0.2), var(--shadow-card);
+}
+
+.catalog-media {
+  height: 150px;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--stone-border);
+}
+
+.catalog-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.catalog-media.is-portrait {
+  height: 210px;
+}
+
+.catalog-media.is-portrait img {
+  object-position: center 12%;
+}
+
+.catalog-media.is-contain img {
+  object-fit: contain;
+}
+
+.catalog-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.9rem 1.1rem 0.4rem;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: default;
+}
+
+.catalog-thumb,
+.catalog-chevron {
+  display: none;
+}
+
+.catalog-heading {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.catalog-heading strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.catalog-summary {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.catalog-meta {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.catalog-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 1.1rem 1.1rem;
+}
+
+.catalog-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.catalog-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.catalog-facts > div {
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.catalog-facts dt {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.catalog-facts dd {
+  margin: 0.1rem 0 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.catalog-warning {
+  margin: 0;
+  color: var(--warning);
+  font-size: 0.88rem;
+}
+
+.catalog-actions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.catalog-actions .btn-primary {
+  width: 100%;
+  margin: 0;
+}
+
+.catalog-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.catalog-inline input {
+  width: 100%;
+  min-width: 0;
+}
+
+.catalog-inline .btn-primary {
+  width: auto;
+  min-width: 6.5rem;
+  margin: 0;
+}
+
+.catalog-owned {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: var(--selection-bg);
+}
+
+.catalog-requirements {
+  margin: 0;
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.catalog-requirements .is-met { color: var(--positive); }
+.catalog-requirements .is-missing { color: var(--warning); }
+.catalog-requirements .is-quiet { color: var(--text-muted); }
+
+/* ---------- Target picker ---------- */
+.target-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.target-filters button {
+  min-height: 32px;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.target-filters button.is-active {
+  color: var(--text-on-gold);
+  background: var(--gold);
+  border-color: var(--gold-bright);
+}
+
+.target-list {
+  display: grid;
+  gap: 0.55rem;
+  max-height: 520px;
+  margin: 0;
+  padding: 0 0.15rem 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.target-list > li {
+  min-width: 0;
+}
+
+.target-option {
+  display: grid;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--stone-border);
+  border-radius: var(--radius-lg);
+  color: inherit;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.target-option:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.target-option[aria-pressed='true'] {
+  border-color: var(--selection-border);
+  background: var(--selection-bg);
+  box-shadow: 0 0 0 2px rgba(200, 149, 47, 0.15);
+}
+
+.target-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.target-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.target-name strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  overflow-wrap: anywhere;
+}
+
+.target-line {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.target-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.target-numbers b {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.target-ratio.is-strong { color: var(--negative); }
+.target-ratio.is-weak { color: var(--positive); }
+
+.target-blocker {
+  color: var(--warning);
+  font-size: 0.78rem;
+}
+
+.relation-badge {
+  display: inline-block;
+  padding: 0.12rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.relation-badge.is-self { color: var(--gold-bright); }
+.relation-badge.is-kingdom { color: var(--info); }
+.relation-badge.is-ally { color: var(--ally); }
+.relation-badge.is-war { color: var(--enemy); }
+.relation-badge.is-neutral { color: var(--neutral); }
+
+/* ---------- Battle reports ---------- */
+.battle-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.battle-report {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--stone-border);
+  border-left: 4px solid var(--neutral);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.battle-report.is-victory { border-left-color: var(--positive); }
+.battle-report.is-defeat { border-left-color: var(--negative); }
+
+.battle-report.is-unseen {
+  box-shadow: 0 0 0 1px rgba(240, 198, 116, 0.35);
+}
+
+.battle-report-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.battle-outcome {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  color: var(--text-on-gold);
+  font: 700 0.7rem/1 var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.is-victory .battle-outcome { background: var(--positive); }
+.is-defeat .battle-outcome { background: var(--negative); }
+
+.battle-report-head strong {
+  display: block;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  line-height: 1.25;
+}
+
+.battle-report-head small {
+  color: var(--text-muted);
+}
+
+.battle-report-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.battle-report-stats > div {
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.battle-report-stats dt {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.battle-report-stats dd {
+  margin: 0.1rem 0 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.battle-report-stats .is-wide {
+  grid-column: 1 / -1;
+}
+
+.battle-units {
+  width: 100%;
+  margin-top: 0.7rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.battle-units th,
+.battle-units td {
+  padding: 0.35rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+
+.battle-units th:first-child,
+.battle-units td:first-child {
+  text-align: left;
+}
+
+.battle-units th {
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.battle-result {
+  margin-bottom: 1.25rem;
+}
+
+/* ---------- Age outlook ---------- */
+.age-outlook.is-apocalypse {
+  border-top-color: var(--enemy);
+}
+
+.age-progress {
+  position: relative;
+  height: 0.6rem;
+  margin: 0.5rem 0 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.age-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold-bright));
+}
+
+.is-apocalypse .age-progress > span {
+  background: linear-gradient(90deg, var(--blood), var(--enemy));
+}
+
+.age-progress-marker {
+  position: absolute;
+  top: -0.35rem;
+  width: 2px;
+  height: 1.3rem;
+  background: var(--enemy);
+}
+
+.age-events {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.age-events li {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.7rem;
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.age-events li:first-child {
+  border-left-color: var(--gold);
+}
+
+.age-event-when {
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.age-events strong { color: var(--text); }
+.age-events small { color: var(--text-muted); }
+
+/* ---------- First steps checklist ---------- */
+.checklist-items {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist-items li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.checklist-items li.is-done {
+  opacity: 0.55;
+}
+
+.checklist-mark {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: var(--text-on-gold);
+  font-weight: 700;
+}
+
+.is-done .checklist-mark {
+  background: var(--gold);
+}
+
+.checklist-items a {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+}
+
+.checklist-items li.is-done a {
+  text-decoration: line-through;
+}
+
+.checklist-items small {
+  display: block;
+  color: var(--text-muted);
+}
+
+/* ---------- Rankings ---------- */
+.rank-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+
+.rank-summary span {
+  display: grid;
+}
+
+.rank-summary small {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.rank-summary strong {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+}
+
+.rankings-table tr.rank-me {
+  background: var(--selection-bg) !important;
+  outline: 1px solid var(--line-strong);
+}
+
+.rank-move {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.rank-move.is-up { color: var(--positive); }
+.rank-move.is-down { color: var(--negative); }
+.rank-move.is-flat { color: var(--text-faint); }
+
+.rank-crown {
+  color: var(--gold-bright);
+}
+
+@media (max-width: 640px) {
+  .catalog-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .catalog-card {
+    border-top-width: 1px;
+    border-radius: var(--radius-lg);
+  }
+
+  .catalog-media {
+    display: none;
+  }
+
+  .catalog-toggle {
+    min-height: 78px;
+    padding: 0.58rem 0.65rem;
+    cursor: pointer;
+  }
+
+  .catalog-thumb {
+    display: block;
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    object-fit: cover;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: rgba(0, 0, 0, 0.38);
+  }
+
+  .catalog-chevron {
+    display: block;
+    flex: 0 0 20px;
+    color: var(--gold);
+    transition: transform 0.18s ease;
+  }
+
+  .catalog-card.is-open .catalog-chevron {
+    transform: rotate(180deg);
+  }
+
+  .catalog-heading strong {
+    overflow: hidden;
+    font-size: 0.92rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .catalog-summary {
+    overflow: hidden;
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .catalog-meta {
+    display: none;
+  }
+
+  .catalog-body {
+    display: none;
+    padding: 0.78rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .catalog-card.is-open .catalog-body {
+    display: flex;
+  }
+
+  .target-list {
+    max-height: min(320px, 40vh);
+  }
+
+  .battle-report-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rank-summary {
+    gap: 0.5rem 1rem;
+  }
+
+  /* Tab strips scroll sideways instead of stacking into several rows. */
+  .section-tabs {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-tabs button {
+    flex: 0 0 auto;
+    min-height: 2.4rem;
+    padding: 0.45rem 0.8rem;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  /* Resource cards stay compact on phones: only warnings keep their hint. */
+  .stats-grid .resource-hint {
+    display: none;
+  }
+
+  .stats-grid .resource-card.is-warning .resource-hint {
+    display: block;
+    font-size: 0.72rem;
+  }
+
+  .stats-grid .delta {
+    margin-top: 0.15rem;
+    font-size: 0.74rem;
+  }
+
+  .tick-countdown.is-compact.is-processing strong {
+    font-size: 0.6rem;
+  }
+}

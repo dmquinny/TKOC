@@ -1,0 +1,15 @@
+{
+  "name": "tkoc-control",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone control panel for The Kingdoms of Chaos: start, stop, update, roll back, and monitor the game server.",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "mariadb": "^3.5.3"
+  }
+}

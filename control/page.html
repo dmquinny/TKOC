@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TKOC Control</title>
+<style>
+  :root {
+    --bg: #14110c; --panel: #1c1810; --panel-2: #241f16; --line: #4a3d24;
+    --gold: #c8952f; --gold-bright: #f0c674; --text: #e8dcc0; --muted: #b7a882; --faint: #8f897d;
+    --ok: #78d98b; --warn: #efc46b; --bad: #ff8585; --info: #8dcbea;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Georgia, 'Times New Roman', serif; }
+  h1, h2, h3 { margin: 0 0 .5rem; color: var(--gold-bright); font-weight: 600; letter-spacing: .5px; }
+  h2 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); }
+  a { color: var(--gold); }
+  button { font: inherit; cursor: pointer; }
+  input { font: inherit; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 1.25rem; }
+  header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); margin-bottom: 1.25rem; }
+  header.top small { color: var(--muted); display: block; }
+  .grid { display: grid; gap: 1rem; }
+  .cols-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .panel { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: 6px; padding: 1rem 1.15rem; min-width: 0; }
+  .pill { display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-size: .78rem; letter-spacing: .5px; text-transform: uppercase; }
+  .pill i { width: .55rem; height: .55rem; border-radius: 50%; background: currentColor; box-shadow: 0 0 .4rem currentColor; }
+  .is-ok { color: var(--ok); } .is-bad { color: var(--bad); } .is-warn { color: var(--warn); } .is-muted { color: var(--faint); } .is-info { color: var(--info); }
+  .btn { min-height: 42px; padding: .55rem 1rem; border-radius: 4px; border: 1px solid var(--gold-bright); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, #8a6d3b); color: #2a1e08; font-weight: 700; letter-spacing: .4px; }
+  .btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.secondary { background: rgba(255,255,255,.05); color: var(--text); border-color: var(--line); font-weight: 500; }
+  .btn.danger { background: linear-gradient(180deg, #a8443d, #682823); border-color: #bd5048; color: #fff; }
+  .btn.warn { background: linear-gradient(180deg, #a86b25, #724516); border-color: #c6832e; color: #fff4d7; }
+  .btn.confirm { outline: 2px solid var(--warn); }
+  .actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .stat { display: grid; gap: .15rem; padding: .6rem .75rem; background: rgba(0,0,0,.22); border: 1px solid rgba(200,149,47,.16); border-radius: 4px; }
+  .stat small { color: var(--muted); font-size: .68rem; letter-spacing: .5px; text-transform: uppercase; }
+  .stat strong { color: var(--text); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .bar { height: .55rem; border-radius: 999px; background: rgba(0,0,0,.4); border: 1px solid rgba(200,149,47,.3); overflow: hidden; margin-top: .3rem; }
+  .bar > span { display: block; height: 100%; background: linear-gradient(90deg, #9c762d, var(--gold-bright)); }
+  .bar.is-hot > span { background: linear-gradient(90deg, #8f2d2d, var(--bad)); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { padding: .4rem .5rem; text-align: left; border-bottom: 1px solid rgba(200,149,47,.14); white-space: nowrap; }
+  th { color: var(--gold); font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+  pre.console { margin: 0; max-height: 380px; overflow: auto; padding: .75rem; background: #090806; border: 1px solid var(--line); border-radius: 4px; color: #d9d2bd; font: 12.5px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  pre.console .err { color: var(--bad); }
+  .console-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+  .console-head span { color: var(--muted); font-size: .85rem; }
+  .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  select, input[type=text], input[type=password] { min-height: 40px; padding: .45rem .7rem; border-radius: 4px; border: 1px solid var(--line); background: rgba(12,10,7,.86); color: var(--text); }
+  .notice { padding: .7rem .9rem; border-radius: 4px; border: 1px solid; margin-bottom: 1rem; }
+  .notice.error { color: var(--bad); border-color: rgba(169,64,64,.7); background: rgba(117,31,31,.14); }
+  .notice.ok { color: var(--ok); border-color: rgba(63,135,80,.7); background: rgba(48,116,65,.14); }
+  .login { max-width: 420px; margin: 8vh auto; }
+  .login form { display: grid; gap: .8rem; }
+  .login label { display: grid; gap: .3rem; color: var(--gold); font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; }
+  .muted { color: var(--muted); }
+  .small { font-size: .85rem; }
+  .history li { color: var(--muted); font-size: .85rem; }
+  .history b { color: var(--text); font-weight: 600; }
+  [hidden] { display: none !important; }
+  @media (max-width: 640px) {
+    body { font-size: 14px; }
+    .wrap { padding: .75rem; }
+    header.top { flex-direction: column; align-items: flex-start; gap: .5rem; }
+    header.top h1 { font-size: 1.3rem; }
+    header.top .row { width: 100%; justify-content: space-between; }
+    .panel { padding: .85rem .9rem; }
+    .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+    .btn { width: 100%; padding-inline: .6rem; }
+    .cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+    .stat { padding: .5rem .6rem; }
+    .stat strong { font-size: .95rem; }
+    pre.console { max-height: 260px; font-size: 11.5px; }
+    table { font-size: .8rem; }
+    th, td { padding: .3rem .4rem; }
+    .console-head { flex-direction: column; align-items: stretch; }
+    .console-head .row { width: 100%; }
+    .console-head select { flex: 1 1 auto; min-width: 0; }
+    .login { margin: 3vh auto; }
+    .pill { font-size: .7rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="login" class="login panel" hidden>
+    <h1>Kingdoms of Chaos · Control</h1>
+    <p class="muted small">Sign in with a game administrator account. Only the database needs to be running.</p>
+    <div id="login-error" class="notice error" hidden></div>
+    <form id="login-form">
+      <label>Username<input id="login-user" type="text" autocomplete="username" required maxlength="16"></label>
+      <label>Password<input id="login-pass" type="password" autocomplete="current-password" required maxlength="72"></label>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <header class="top">
+      <div>
+        <h1>Kingdoms of Chaos · Control</h1>
+        <small id="app-dir"></small>
+      </div>
+      <div class="row">
+        <span class="muted small" id="whoami"></span>
+        <button class="btn secondary" id="logout">Sign out</button>
+      </div>
+    </header>
+
+    <div id="flash" class="notice error" hidden></div>
+
+    <div class="grid cols-2">
+      <section class="panel">
+        <h2>Game server</h2>
+        <div class="row" id="containers" style="margin-bottom:.75rem"></div>
+        <div class="grid cols-3" id="game-stats"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Actions</h2>
+        <p class="muted small" id="job-state">No action is running.</p>
+        <div class="actions" id="actions"></div>
+        <p class="muted small" style="margin:.75rem 0 0">
+          <b>Update</b> rebuilds the image and applies pending migrations with a backup; <b>Full update</b> always backs up, migrates, and reseeds;
+          <b>Roll back</b> restores the previous image. Actions run one at a time.
+        </p>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:1rem">
+      <div class="console-head">
+        <h2 style="margin:0">Action output</h2>
+        <span id="job-meta">Output of the current or last action appears here.</span>
+      </div>
+      <pre class="console" id="console">Nothing has run yet.</pre>
+      <ul class="history" id="history"></ul>
+    </section>
+
+    <div class="grid cols-2" style="margin-top:1rem">
+      <section class="panel">
+        <h2>Host</h2>
+        <div class="grid cols-3" id="host-stats"></div>
+        <h3 style="margin-top:1rem;font-size:.9rem">Disks</h3>
+        <div class="table-wrap"><table id="disks"><thead><tr><th>Path</th><th>Size</th><th>Used</th><th>Free</th><th style="width:30%">Use</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="panel">
+        <h2>Containers</h2>
+        <div class="table-wrap"><table id="docker-stats"><thead><tr><th>Container</th><th>CPU</th><th>Memory</th><th>Net I/O</th><th>Disk I/O</th></tr></thead><tbody></tbody></table></div>
+        <h3 style="margin-top:1rem;font-size:.9rem">Docker disk usage</h3>
+        <div class="table-wrap"><table id="docker-df"><thead><tr><th>Type</th><th>Total</th><th>Active</th><th>Size</th><th>Reclaimable</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:1rem">
+      <div class="console-head">
+        <h2 style="margin:0">Logs</h2>
+        <div class="row">
+          <select id="log-service"><option value="web">tkoc-web</option><option value="tick">tkoc-tick</option><option value="db">database</option><option value="control">control panel</option></select>
+          <select id="log-lines"><option>100</option><option selected>200</option><option>500</option><option>1000</option></select>
+          <button class="btn secondary" id="log-refresh">Refresh</button>
+        </div>
+      </div>
+      <pre class="console" id="logs">Choose a service and refresh.</pre>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmtBytes = bytes => {
+    if (!Number.isFinite(bytes)) return '—';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let value = bytes, index = 0;
+    while (value >= 1024 && index < units.length - 1) { value /= 1024; index += 1; }
+    return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+  };
+  const fmtDuration = seconds => {
+    const d = Math.floor(seconds / 86400), h = Math.floor((seconds % 86400) / 3600), m = Math.floor((seconds % 3600) / 60);
+    return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+  };
+  const fmtTime = iso => iso ? new Date(iso).toLocaleString() : '—';
+  const esc = text => String(text).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+
+  async function api(path, options = {}) {
+    const response = await fetch(path, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'tkoc-control', ...(options.headers || {}) },
+      cache: 'no-store',
+    });
+    const body = await response.json().catch(() => ({}));
+    if (response.status === 401) { showLogin(); throw new Error(body.error || 'Sign in required'); }
+    if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+    return body;
+  }
+
+  let timers = [];
+  let events = null;
+  let actions = [];
+  let pendingConfirm = null;
+  let currentJobId = null;
+
+  function showLogin() {
+    stopPolling();
+    $('login').hidden = false;
+    $('app').hidden = true;
+  }
+
+  function stopPolling() {
+    timers.forEach(clearInterval);
+    timers = [];
+    if (events) { events.close(); events = null; }
+  }
+
+  function flash(message, ok = false) {
+    const box = $('flash');
+    box.hidden = !message;
+    box.className = `notice ${ok ? 'ok' : 'error'}`;
+    box.textContent = message || '';
+    if (message) setTimeout(() => { if (box.textContent === message) box.hidden = true; }, 8000);
+  }
+
+  async function boot() {
+    try {
+      const session = await api('/api/session');
+      $('login').hidden = true;
+      $('app').hidden = false;
+      $('whoami').textContent = `Signed in as ${session.user.username}`;
+      $('app-dir').textContent = session.appDir;
+      actions = session.actions;
+      renderActions(null);
+      await Promise.all([refreshStatus(), refreshStats()]);
+      openEvents();
+      timers.push(setInterval(refreshStatus, 6000));
+      timers.push(setInterval(refreshStats, 20000));
+    } catch {
+      showLogin();
+    }
+  }
+
+  function renderActions(job) {
+    const running = job && job.exitCode === null;
+    const kinds = { stop: 'danger', rollback: 'warn', 'update-full': 'warn', prune: 'secondary', restart: 'secondary' };
+    const confirmNeeded = new Set(['stop', 'rollback', 'update-full', 'restart', 'prune']);
+    $('actions').innerHTML = actions.map(action => {
+      const confirming = pendingConfirm === action.id;
+      return `<button class="btn ${kinds[action.id] || ''} ${confirming ? 'confirm' : ''}" data-action="${action.id}" ${running ? 'disabled' : ''}>${confirming ? `Confirm ${action.label.toLowerCase()}?` : action.label}</button>`;
+    }).join('');
+    $('actions').querySelectorAll('button').forEach(button => {
+      button.addEventListener('click', async () => {
+        const id = button.dataset.action;
+        if (confirmNeeded.has(id) && pendingConfirm !== id) {
+          pendingConfirm = id;
+          renderActions(job);
+          setTimeout(() => { if (pendingConfirm === id) { pendingConfirm = null; renderActions(job); } }, 5000);
+          return;
+        }
+        pendingConfirm = null;
+        try {
+          const result = await api('/api/action', { method: 'POST', body: JSON.stringify({ action: id }) });
+          $('console').textContent = '';
+          currentJobId = result.job.id;
+          renderJob(result.job);
+          flash(`${result.job.label} started.`, true);
+        } catch (error) {
+          flash(error.message);
+        }
+      });
+    });
+  }
+
+  function renderJob(job) {
+    const running = job && job.exitCode === null;
+    $('job-state').textContent = !job
+      ? 'No action is running.'
+      : running
+        ? `${job.label} is running (started ${fmtTime(job.startedAt)} by ${job.startedBy})…`
+        : `Last action: ${job.label} ${job.exitCode === 0 ? 'succeeded' : `failed (exit ${job.exitCode})`} at ${fmtTime(job.finishedAt)}.`;
+    $('job-meta').textContent = job ? `${job.command} · ${job.lineCount ?? 0} lines` : 'Output of the current or last action appears here.';
+    renderActions(job);
+  }
+
+  function appendLine(entry) {
+    const pre = $('console');
+    if (pre.textContent === 'Nothing has run yet.') pre.textContent = '';
+    const stuck = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 8;
+    const span = document.createElement('span');
+    span.className = entry.stream === 'err' ? 'err' : '';
+    span.textContent = `${entry.line}\n`;
+    pre.appendChild(span);
+    if (stuck) pre.scrollTop = pre.scrollHeight;
+  }
+
+  function openEvents() {
+    events = new EventSource('/api/events');
+    events.addEventListener('hello', async () => {
+      try {
+        const { job } = await api('/api/job');
+        if (job) {
+          $('console').textContent = '';
+          job.lines.forEach(appendLine);
+          currentJobId = job.id;
+          renderJob(job);
+        }
+      } catch {}
+    });
+    events.addEventListener('line', event => appendLine(JSON.parse(event.data)));
+    events.addEventListener('job', event => {
+      const job = JSON.parse(event.data);
+      if (job && job.id !== currentJobId) { $('console').textContent = ''; currentJobId = job.id; }
+      renderJob(job);
+      if (job && job.exitCode !== null) { refreshStatus(); refreshHistory(); }
+    });
+  }
+
+  async function refreshHistory() {
+    try { const status = await api('/api/status'); renderHistory(status.history); } catch {}
+  }
+
+  function renderHistory(history) {
+    $('history').innerHTML = (history || []).slice(0, 8).map(job =>
+      `<li><b>${esc(job.label)}</b> · ${job.exitCode === 0 ? 'ok' : `exit ${job.exitCode}`} · ${fmtTime(job.finishedAt)} · ${esc(job.startedBy)}</li>`
+    ).join('');
+  }
+
+  async function refreshStatus() {
+    try {
+      const status = await api('/api/status');
+      const states = status.containers.map(container => {
+        const tone = container.running ? 'is-ok' : 'is-bad';
+        return `<span class="pill ${tone}" title="${esc(container.status)} · ${esc(container.image)}"><i></i>${esc(container.name)} · ${esc(container.state)}</span>`;
+      });
+      const names = new Set(status.containers.map(container => container.name));
+      for (const expected of ['tkoc-web', 'tkoc-tick']) {
+        if (!names.has(expected)) states.push(`<span class="pill is-muted"><i></i>${expected} · missing</span>`);
+      }
+      const health = status.health;
+      states.push(health.reachable
+        ? `<span class="pill ${health.status === 'ok' ? 'is-ok' : 'is-warn'}"><i></i>health · ${esc(health.status || health.httpStatus)}</span>`
+        : `<span class="pill is-bad"><i></i>health · unreachable</span>`);
+      $('containers').innerHTML = states.join('');
+      const game = status.game;
+      const nextTick = game.nextTickAt ? Math.max(0, Math.round((new Date(game.nextTickAt) - new Date(status.time)) / 60000)) : null;
+      const cells = game.connected ? [
+        ['Age / tick', `${game.age} / ${game.tick}`],
+        ['Season', `${game.season}${game.phase === 'Apocalypse' ? ' · Apocalypse' : ''}`],
+        ['Next tick', nextTick === null ? 'not scheduled' : `in ${nextTick} min`],
+        ['Last tick', fmtTime(game.lastTickAt)],
+        ['Living provinces', game.provinces],
+        ['Accounts', game.users],
+        ['Database size', fmtBytes(game.databaseBytes)],
+      ] : [['Database', `unreachable: ${game.error || 'unknown error'}`]];
+      $('game-stats').innerHTML = cells.map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${esc(value)}</strong></div>`).join('');
+      if (!currentJobId && status.job) { currentJobId = status.job.id; }
+      renderJob(status.job);
+      renderHistory(status.history);
+    } catch (error) {
+      flash(error.message);
+    }
+  }
+
+  async function refreshStats() {
+    try {
+      const stats = await api('/api/stats');
+      const host = stats.host;
+      const memPercent = Math.round((host.memory.usedBytes / host.memory.totalBytes) * 100);
+      $('host-stats').innerHTML = [
+        ['Load (1 / 5 / 15 min)', host.load.join(' / ')],
+        ['CPUs', host.cpus],
+        ['Uptime', fmtDuration(host.uptimeSeconds)],
+        ['Memory', `${fmtBytes(host.memory.usedBytes)} of ${fmtBytes(host.memory.totalBytes)}<div class="bar ${memPercent > 90 ? 'is-hot' : ''}"><span style="width:${memPercent}%"></span></div>`],
+        ['Host', `${esc(host.hostname)}<br><span class="muted small">${esc(host.platform)}</span>`],
+        ['Panel uptime', fmtDuration(host.panelUptimeSeconds)],
+      ].map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${value}</strong></div>`).join('');
+      $('disks').querySelector('tbody').innerHTML = stats.disks.map(disk =>
+        `<tr><td title="${esc(disk.filesystem)} on ${esc(disk.mount)}">${esc(disk.path)}</td><td class="num">${fmtBytes(disk.totalBytes)}</td><td class="num">${fmtBytes(disk.usedBytes)}</td><td class="num">${fmtBytes(disk.availableBytes)}</td><td><div class="bar ${disk.usePercent > 90 ? 'is-hot' : ''}"><span style="width:${disk.usePercent}%"></span></div><span class="muted small">${disk.usePercent}%</span></td></tr>`
+      ).join('') || '<tr><td colspan="5" class="muted">No disks reported.</td></tr>';
+      $('docker-stats').querySelector('tbody').innerHTML = stats.docker.containers.map(container =>
+        `<tr><td>${esc(container.name)}</td><td class="num">${esc(container.cpu)}</td><td class="num">${esc(container.memory)} (${esc(container.memoryPercent)})</td><td class="num">${esc(container.network)}</td><td class="num">${esc(container.block)}</td></tr>`
+      ).join('') || '<tr><td colspan="5" class="muted">No running containers.</td></tr>';
+      $('docker-df').querySelector('tbody').innerHTML = stats.docker.usage.map(row =>
+        `<tr><td>${esc(row.type)}</td><td class="num">${esc(row.total)}</td><td class="num">${esc(row.active)}</td><td class="num">${esc(row.size)}</td><td class="num">${esc(row.reclaimable)}</td></tr>`
+      ).join('');
+    } catch (error) {
+      flash(error.message);
+    }
+  }
+
+  async function refreshLogs() {
+    $('logs').textContent = 'Loading…';
+    try {
+      const result = await api(`/api/logs?service=${encodeURIComponent($('log-service').value)}&lines=${encodeURIComponent($('log-lines').value)}`);
+      $('logs').textContent = result.lines || `No output from ${result.container}.`;
+      $('logs').scrollTop = $('logs').scrollHeight;
+    } catch (error) {
+      $('logs').textContent = error.message;
+    }
+  }
+
+  $('login-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    $('login-error').hidden = true;
+    try {
+      await api('/api/login', { method: 'POST', body: JSON.stringify({ username: $('login-user').value, password: $('login-pass').value }) });
+      $('login-pass').value = '';
+      await boot();
+    } catch (error) {
+      $('login-error').textContent = error.message;
+      $('login-error').hidden = false;
+    }
+  });
+  $('logout').addEventListener('click', async () => {
+    await api('/api/logout', { method: 'POST' }).catch(() => {});
+    showLogin();
+  });
+  $('log-refresh').addEventListener('click', refreshLogs);
+  $('log-service').addEventListener('change', refreshLogs);
+
+  boot();
+})();
+</script>
+</body>
+</html>

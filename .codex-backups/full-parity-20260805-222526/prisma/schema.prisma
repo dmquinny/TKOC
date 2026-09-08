@@ -1,0 +1,439 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id             Int      @id @default(autoincrement()) @map("userID")
+  // bcrypt hashes are 60 chars; the legacy VarChar(50) truncated them and broke login.
+  password       String?  @db.VarChar(255)
+  username       String?  @unique @db.VarChar(16)
+  name           String?  @db.VarChar(80)
+  email          String?  @unique @db.VarChar(100)
+  dob            DateTime @db.Date
+  country        String?  @db.VarChar(40)
+  pID            Int      @default(0)
+  created        DateTime @db.Date
+  history        String?  @db.Text
+  activeSessions Int?     @default(0)
+  access         Int?     @default(3)
+  nick           String?  @db.VarChar(90)
+  signature      String?  @db.Text
+  image          String?  @db.VarChar(255)
+  status         String?  @default("Active") @db.VarChar(12) // Active | Banned
+  sessionVersion Int      @default(0)
+  regIp          String?  @db.VarChar(45)
+  mobileNav      String?  @db.VarChar(255)
+
+  @@map("User")
+}
+
+model Province {
+  id             Int     @id @default(autoincrement()) @map("pID")
+  provinceName   String? @unique @db.VarChar(40)
+  rulerName      String? @db.VarChar(40)
+  gender         String? @default("M") @db.Char(1)
+  mana           Int?    @default(100)
+  influence      Int?    @default(100)
+  acres          Int?    @default(300)
+  peasants       Int?    @default(1400)
+  gold           Int?    @default(280000)
+  food           Int?    @default(40000)
+  metal          Int?    @default(5000)
+  spID           Int     @default(0)
+  kiID           Int     @default(0)
+  networth       Int?
+  incomeChange   Int?    @default(0)
+  incomeTotal    Int?    @default(0)
+  peasantChange  Int?    @default(0)
+  peasantTotal   Int?    @default(0)
+  foodChange     Int?    @default(0)
+  foodTotal      Int?    @default(0)
+  raceId         Int?    @default(0)
+  morale         Int?    @default(100)
+  protection     Int?    @default(50)
+  aliveTicks     Int     @default(0)
+  vacation       Boolean @default(false)
+  vacationTicks  Int     @default(0)
+  voteFor        Int?    @default(0)
+  councilId      Int?    @default(0)
+  aidSentTick    Int     @default(0)
+  status         String  @default("Alive") @db.VarChar(12) // Alive | Killed
+  attackPressure Int     @default(0)
+
+  buildings       Building[]
+  military        MilitaryUnit[]
+  science         Science[]
+  exploreOrders   ExploreOrder[]
+  buildOrders     BuildOrder[]
+  researchOrders  ResearchOrder[]
+  militaryOrders  MilitaryOrder[]
+  news            News[]
+  effects         Effect[]
+  outgoingAttacks Attack[]        @relation("Attacker")
+  incomingAttacks Attack[]        @relation("Defender")
+
+  @@map("Province")
+}
+
+model Race {
+  id           Int     @id @default(autoincrement()) @map("rID")
+  name         String  @unique @db.VarChar(40)
+  // Percent multipliers; 100 = neutral.
+  offenseBonus Int     @default(100)
+  defenseBonus Int     @default(100)
+  incomeBonus  Int     @default(100)
+  magicBonus   Int     @default(100)
+  foodUpkeep   Int     @default(100) // % of normal food each unit/peasant eats
+  description  String? @db.Text
+
+  @@map("Race")
+}
+
+model ScienceType {
+  id                  Int       @id @default(autoincrement()) @map("scID")
+  name                String    @unique @db.VarChar(60)
+  effect              String    @db.VarChar(40) // income | foodProduction | metalProduction | offense | defense | magic
+  costGold            Int       @default(5000)
+  costMetal           Int       @default(0)
+  bonusPerLevel       Int       @default(3) // percent per level
+  maxLevel            Int       @default(10)
+  researchTicks       Int       @default(4) // ticks to research one level (per original ScienceBase)
+  description         String?   @db.Text
+  className           String?   @unique @db.VarChar(60)
+  category            String?   @db.VarChar(20)
+  reqMilitary         Int       @default(0)
+  reqInfrastructure   Int       @default(0)
+  reqMagic            Int       @default(0)
+  reqThievery         Int       @default(0)
+  givesMilitary       Int       @default(0)
+  givesInfrastructure Int       @default(0)
+  givesMagic          Int       @default(0)
+  givesThievery       Int       @default(0)
+  levels              Science[]
+
+  @@map("ScienceT")
+}
+
+model Science {
+  id    Int @id @default(autoincrement())
+  pID   Int
+  scID  Int
+  level Int @default(0)
+
+  province Province    @relation(fields: [pID], references: [id])
+  type     ScienceType @relation(fields: [scID], references: [id])
+
+  @@unique([pID, scID])
+  @@map("Science")
+}
+
+model ExploreOrder {
+  id        Int @id @default(autoincrement())
+  pID       Int
+  acres     Int
+  ticksLeft Int @default(3)
+
+  province Province @relation(fields: [pID], references: [id])
+
+  @@map("ExploreOrder")
+}
+
+model BuildOrder {
+  id        Int @id @default(autoincrement())
+  pID       Int
+  bID       Int // BuildingType id
+  num       Int
+  ticksLeft Int @default(4)
+
+  province Province @relation(fields: [pID], references: [id])
+
+  @@index([pID])
+  @@map("BuildOrder")
+}
+
+model MilitaryOrder {
+  id        Int @id @default(autoincrement())
+  pID       Int
+  mID       Int // MilitaryType id
+  num       Int
+  ticksLeft Int @default(12)
+
+  province Province @relation(fields: [pID], references: [id])
+
+  @@index([pID])
+  @@map("MilitaryOrder")
+}
+
+model ResearchOrder {
+  id        Int @id @default(autoincrement())
+  pID       Int
+  scID      Int // ScienceType id
+  ticksLeft Int @default(4)
+
+  province Province @relation(fields: [pID], references: [id])
+
+  @@unique([pID]) // exactly one active research slot per province
+  @@index([pID, scID])
+  @@map("ResearchOrder")
+}
+
+model News {
+  id        Int      @id @default(autoincrement())
+  pID       Int
+  message   String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  province Province @relation(fields: [pID], references: [id])
+
+  @@index([pID])
+  @@map("News")
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  scope     String   @db.VarChar(10) // 'world' | 'kingdom'
+  kiID      Int      @default(0) // kingdom id for kingdom scope, 0 for world
+  pID       Int // author province
+  author    String   @db.VarChar(40) // denormalized name for display
+  message   String   @db.VarChar(280)
+  createdAt DateTime @default(now())
+
+  @@index([scope, kiID, id])
+  @@map("ChatMessage")
+}
+
+model Message {
+  id        Int       @id @default(autoincrement())
+  fromPID   Int
+  toPID     Int
+  fromName  String    @db.VarChar(40)
+  subject   String    @db.VarChar(120)
+  body      String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([toPID, id])
+  @@map("Message")
+}
+
+model GameState {
+  id                 Int       @id @default(1)
+  tick               Int       @default(0)
+  season             String    @default("Spring") @db.VarChar(10)
+  age                Int       @default(1)
+  phase              String    @default("Running") @db.VarChar(12)
+  lastTickAt         DateTime? @db.DateTime(3)
+  nextTickAt         DateTime? @db.DateTime(3)
+  lastTickDurationMs Int?
+
+  @@map("GameState")
+}
+
+model TickRun {
+  id               BigInt   @id @default(autoincrement())
+  age              Int
+  tick             Int
+  scheduledFor     DateTime @unique @db.DateTime(3)
+  completedAt      DateTime @default(now()) @db.DateTime(3)
+  durationMs       Int
+  provincesUpdated Int      @default(0)
+
+  @@index([age, tick])
+  @@map("TickRun")
+}
+
+model RateLimitBucket {
+  key         String   @id @db.VarChar(191)
+  windowStart DateTime
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model OperationalEvent {
+  id             BigInt    @id @default(autoincrement())
+  kind           String    @db.VarChar(32)
+  severity       String    @db.VarChar(12)
+  requestId      String?   @db.VarChar(64)
+  route          String?   @db.VarChar(120)
+  userId         Int?
+  pID            Int?
+  summary        String    @db.VarChar(255)
+  detail         String?   @db.Text
+  createdAt      DateTime  @default(now())
+  acknowledgedAt DateTime?
+  acknowledgedBy Int?
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+  @@index([severity, createdAt])
+  @@index([acknowledgedAt, createdAt])
+}
+
+model Advisor {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique @db.VarChar(40)
+  title       String  @db.VarChar(60)
+  effect      String  @db.VarChar(20) // income | offense | defense | magic | foodProduction | explore
+  bonus       Int     @default(10) // percent
+  effect2     String? @db.VarChar(20)
+  bonus2      Int     @default(0)
+  costGold    Int     @default(0)
+  races       String  @default("Human,Elf,Orc,Dwarf,Undead,Giant") @db.VarChar(80)
+  description String? @db.Text
+
+  @@map("Advisor")
+}
+
+model KingdomRelation {
+  id            Int      @id @default(autoincrement())
+  fromKiId      Int // proposer / aggressor
+  toKiId        Int // target
+  initiatorKiId Int
+  type          String   @db.VarChar(5) // 'war' | 'ally'
+  status        String   @db.VarChar(8) // 'pending' | 'active'
+  createdAt     DateTime @default(now())
+
+  @@unique([fromKiId, toKiId])
+  @@index([fromKiId])
+  @@index([toKiId])
+  @@map("KingdomRelation")
+}
+
+model Effect {
+  id        Int      @id @default(autoincrement())
+  pID       Int
+  type      String   @db.VarChar(40)
+  magnitude Int      @default(0) // legacy spell strength, 0..100
+  ticksLeft Int      @default(0)
+  sourcePID Int?
+  wizards   Int      @default(0) // wizards committed to maintaining the spell
+  createdAt DateTime @default(now())
+
+  province Province @relation(fields: [pID], references: [id])
+
+  @@index([pID])
+  @@index([sourcePID])
+  @@map("Effect")
+}
+
+model AgeResult {
+  id           Int     @id @default(autoincrement())
+  age          Int
+  rank         Int
+  provinceName String  @db.VarChar(40)
+  rulerName    String  @db.VarChar(40)
+  networth     Int
+  kingdomName  String? @db.VarChar(40)
+
+  @@index([age])
+  @@map("AgeResult")
+}
+
+model Kingdom {
+  id              Int     @id @default(autoincrement()) @map("kiID")
+  name            String? @unique @db.VarChar(40)
+  king            Int     @default(0)
+  password        String? @db.VarChar(255)
+  banner          String? @db.VarChar(100)
+  signature       String? @db.VarChar(100)
+  numProvinces    Int     @default(0)
+  relationWar     Int?    @default(0)
+  relationAlly    Int?    @default(0)
+  relationMerge   String? @default("false") @db.VarChar(10)
+  relationWarTick Int?    @default(0)
+
+  @@map("Kingdom")
+}
+
+model BuildingType {
+  id         Int        @id @default(autoincrement()) @map("bID")
+  className  String?    @unique @db.VarChar(100)
+  costGold   Int        @default(1000)
+  costMetal  Int        @default(100)
+  buildTicks Int        @default(10) // ticks to construct (per original BuildingBase)
+  buildings  Building[]
+
+  @@map("BuildingT")
+}
+
+model Building {
+  id  Int @id @default(autoincrement())
+  bID Int
+  pID Int
+  num Int @default(0)
+
+  province Province     @relation(fields: [pID], references: [id])
+  type     BuildingType @relation(fields: [bID], references: [id])
+
+  @@unique([pID, bID])
+  @@map("Buildings")
+}
+
+model MilitaryType {
+  id          Int            @id @default(autoincrement()) @map("mID")
+  className   String?        @unique @db.VarChar(100)
+  costGold    Int            @default(100)
+  costMetal   Int            @default(50)
+  costFood    Int            @default(0)
+  attack      Int            @default(1)
+  defense     Int            @default(1)
+  displayName String?        @db.VarChar(60)
+  raceName    String?        @db.VarChar(20)
+  category    String?        @db.VarChar(20)
+  trainTicks  Int            @default(12) // ticks to train (per original MilitaryBase); 0 = instant/not trainable
+  units       MilitaryUnit[]
+  armies      Army[]
+
+  @@map("MilitaryT")
+}
+
+model MilitaryUnit {
+  id  Int @id @default(autoincrement())
+  pID Int
+  mID Int
+  num Int @default(0)
+
+  province Province     @relation(fields: [pID], references: [id])
+  type     MilitaryType @relation(fields: [mID], references: [id])
+
+  @@unique([pID, mID])
+  @@map("Military")
+}
+
+model Attack {
+  id         Int @id @default(autoincrement()) @map("attackID")
+  pID        Int // Attacker
+  targetID   Int // Defender
+  attackType Int @default(0) // Standard, Ambush, etc
+  totick     Int @default(3) // Ticks until combat resolves
+  staytick   Int @default(0) // Usually for spells or occupation
+  backtick   Int @default(0) // Ticks until army returns home
+  acres      Int @default(0) // Looted acres
+  gold       Int @default(0) // Looted gold
+  metal      Int @default(0) // Looted metal
+  food       Int @default(0) // Looted food
+
+  attacker Province @relation("Attacker", fields: [pID], references: [id])
+  defender Province @relation("Defender", fields: [targetID], references: [id])
+  armies   Army[]
+
+  @@map("Attack")
+}
+
+model Army {
+  id       Int @id @default(autoincrement()) @map("armyID")
+  pID      Int
+  AttackID Int
+  mID      Int
+  num      Int @default(0)
+
+  attack Attack       @relation(fields: [AttackID], references: [id])
+  type   MilitaryType @relation(fields: [mID], references: [id])
+  // province is optional to relate back, but pID is sufficient as it's the attacker
+
+  @@map("Army")
+}
