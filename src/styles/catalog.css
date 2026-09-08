@@ -963,3 +963,29 @@
     font-size: 0.6rem;
   }
 }
+
+/* Folded checklist summary and its action row. */
+.checklist-next {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.checklist-next a {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+}
+
+.checklist-actions {
+  justify-content: flex-start;
+}
+
+@media (max-width: 640px) {
+  .checklist-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .checklist-actions .btn-secondary {
+    flex: 1 1 auto;
+  }
+}

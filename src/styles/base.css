@@ -1,4 +1,6 @@
 /* Base resets, typography, form controls, and buttons. */
+*,
+*::before,
 *::after {
   box-sizing: border-box;
 }

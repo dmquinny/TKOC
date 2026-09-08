@@ -71,7 +71,7 @@ export default function RankingsPage() {
 
   return (
     <>
-      <PageBanner image="/game/headers/header-rankings.webp" title="Global Rankings" subtitle={`Networth, thieves, wizards, armies, and kingdoms of the ${data.total.toLocaleString()} living provinces.`} />
+      <PageBanner image="/game/headers/header-rankings.webp" title="Global Rankings" subtitle={`Networth, thieves, wizards, armies, and kingdoms of the ${data.total.toLocaleString()} living ${data.total === 1 ? "province" : "provinces"}.`} />
 
       <Notices error={error} />
 

@@ -173,8 +173,7 @@ export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
         </Link>
         {clock ? (
           <div className="mobile-clock" aria-label={`Age ${clock.age}, week ${tickWeek(clock.tick)}, day ${tickDay(clock.tick)}`}>
-            <span><small>Age</small><strong>{clock.age}</strong></span>
-            <span><small>Day</small><strong>{tickDay(clock.tick)}</strong></span>
+            <span><small>Age {clock.age}</small><strong>Day {tickDay(clock.tick)}</strong></span>
             <TickCountdown nextTickAt={clock.nextTickAt} compact onElapsed={handleTickElapsed} />
           </div>
         ) : (

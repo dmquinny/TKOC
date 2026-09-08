@@ -19,6 +19,25 @@ runs the fast unit tests under `tests/`.
 database, creates one temporary rate-limit row, verifies concurrent updates,
 and removes the row.
 
+## Local development
+
+The git-ignored `.env` points the app at a local database on
+`127.0.0.1:3307` (`root` / `tkoc`, database `tkoc`). Any MySQL 8 or MariaDB
+10.6+ works; the portable MariaDB zip from archive.mariadb.org needs no
+install (`mysql_install_db --datadir=... --password=tkoc --port=3307`, then
+`mysqld --datadir=... --port=3307 --console`). Then:
+
+```sh
+npx prisma migrate deploy
+npx prisma db seed
+npx next dev --webpack
+```
+
+Use the `--webpack` flag for both `next dev` and `next build` on the `W:`
+share; Turbopack cannot create the junctions it needs on a network drive.
+To force a tick locally, set `GameState.nextTickAt` to a past time and call
+`POST /api/cron/tick` with `Authorization: Bearer <CRON_SECRET>`.
+
 ## Updating the live game
 
 The application folder on this machine (`W:\tkoc-modern`) is the same folder

@@ -66,10 +66,9 @@
   }
 
   .mobile-clock {
-    min-width: 7.2rem;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    padding-left: 0.65rem;
+    grid-template-columns: auto auto;
+    padding-left: 0.55rem;
     line-height: 1;
     border-left: 1px solid rgba(200, 149, 47, 0.23);
   }
