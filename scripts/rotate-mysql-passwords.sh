@@ -163,8 +163,11 @@ rm -f -- "$backup_tmp"
 backup_tmp=''
 
 echo 'Updating the live MySQL accounts...'
-printf "ALTER USER 'tkoc'@'%%' IDENTIFIED BY '%s';\nALTER USER 'root'@'localhost' IDENTIFIED BY '%s';\n" \
-  "$app_password" "$root_password" |
+# The official image creates root for both localhost (socket) and '%' (network).
+# tkoc-db uses host networking, so the '%' account is reachable on the LAN and
+# must not keep the old password.
+printf "ALTER USER 'tkoc'@'%%' IDENTIFIED BY '%s';\nALTER USER IF EXISTS 'tkoc'@'localhost' IDENTIFIED BY '%s';\nALTER USER 'root'@'localhost' IDENTIFIED BY '%s';\nALTER USER IF EXISTS 'root'@'%%' IDENTIFIED BY '%s';\n" \
+  "$app_password" "$app_password" "$root_password" "$root_password" |
   docker exec -i "$database_container" sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot "$MYSQL_DATABASE"'
 
 mv -f -- "$root_tmp" "$root_compose"
@@ -191,9 +194,18 @@ result=$(docker exec -e TKOC_VERIFY_PASSWORD="$app_password" "$database_containe
   'MYSQL_PWD="$TKOC_VERIFY_PASSWORD" exec mysql -utkoc "$MYSQL_DATABASE" --batch --skip-column-names -e "SELECT 1"')
 [ "$result" = '1' ] || fail 'the new TKOC application login could not be verified.'
 
+# Containers only read env_file values when they are created, so recreate every
+# consumer of DATABASE_URL. The control panel goes first so it is available to
+# diagnose the game if web does not come back healthy.
+if docker container inspect tkoc-control >/dev/null 2>&1; then
+  echo 'Restarting the TKOC control panel with the new application credential...'
+  docker compose -f "$root_compose" up -d --force-recreate --no-deps tkoc-control
+fi
+
 if docker container inspect tkoc-web >/dev/null 2>&1; then
   echo 'Restarting TKOC web and tick containers with the new application credential...'
-  docker compose -f "$app_compose" up -d web tick
+  docker compose -f "$app_compose" up -d --force-recreate web tick \
+    || echo 'Warning: web or tick did not become healthy. The passwords are rotated and verified; check docker logs tkoc-web.' >&2
 else
   echo 'TKOC is not deployed yet; its production environment is ready for the first deployment.'
 fi
