@@ -55,3 +55,7 @@ deploy.config.json
 
 # per-machine tool settings
 .claude/settings.local.json
+
+# coding-assistant instructions; kept locally, not part of the game
+/AGENTS.md
+/CLAUDE.md
