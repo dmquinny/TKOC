@@ -6,22 +6,35 @@ It signs administrators in with their normal game account (the `User` table,
 bcrypt password, access level 1), so it works whenever the database is up,
 even while the game itself is stopped or broken.
 
-What it shows:
+The page has three tabs, a light and a dark theme (it follows the device
+until you pick one), and works on a phone.
 
-- container states for web, tick, database, and the panel itself, plus the
-  game's health endpoint;
-- the game clock straight from the database: age, tick, season, next tick,
-  living provinces, accounts, database size;
-- host load, CPUs, memory, uptime, and disk usage for the app, appdata, and
-  root filesystems;
-- per-container CPU, memory, network, and disk I/O and Docker's own disk
-  usage;
-- live streamed output of the running action, a short action history, and a
-  log viewer for each container.
+- **Overview**: a one-line verdict on the game (operational, degraded,
+  stopped, action in progress), a card per container (web, tick, database,
+  the panel itself) with its state, CPU, and memory, the game's health
+  endpoint and auto-heal state, and the game clock straight from the
+  database: a live countdown to the next tick, age, season, living provinces,
+  accounts, database size. The actions, the live streamed output of the
+  running action, and a short action history are here too.
+- **System**: host load and memory with a trend line for the last hour (the
+  panel samples them every 30 seconds, so the line is there when you open the
+  page), uptime, disk usage for the app, appdata, and root filesystems,
+  per-container CPU, memory, network, and disk I/O, and Docker's own disk
+  usage.
+- **Logs**: the last 100 to 1000 lines of any container, with a text filter,
+  a Follow switch that reloads every 5 seconds, line wrapping, copy, and
+  download.
+
+Polling pauses while the browser tab is in the background.
 
 Actions run one at a time: Start, Stop, Restart (recreate), Update
 (`scripts/update.sh`), Full update (`--full`), Roll back
-(`scripts/rollback.sh`), and Prune Docker (dangling images).
+(`scripts/rollback.sh`), and Prune Docker (dangling images). Everything
+except Start and Update asks for confirmation and shows the command it will
+run.
+
+`page.html` is self-contained (no build step, fonts, or CDN scripts) so the
+panel still loads when the host has no internet access.
 
 ## Running it
 

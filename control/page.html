@@ -3,189 +3,542 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>TKOC Control</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171716'/%3E%3Cpath d='M7 12l5 4.5L16 8l4 8.5 5-4.5-2 12H9L7 12z' fill='%23e0a526'/%3E%3C/svg%3E">
+<script>
+  // Resolve the theme before first paint so the page never flashes the wrong one.
+  (function () {
+    var theme = null;
+    try { theme = localStorage.getItem('tkoc-control-theme'); } catch (error) {}
+    if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
 <style>
   :root {
-    --bg: #14110c; --panel: #1c1810; --panel-2: #241f16; --line: #4a3d24;
-    --gold: #c8952f; --gold-bright: #f0c674; --text: #e8dcc0; --muted: #b7a882; --faint: #8f897d;
-    --ok: #78d98b; --warn: #efc46b; --bad: #ff8585; --info: #8dcbea;
+    color-scheme: light;
+    --page: #f6f6f3; --surface: #ffffff; --surface-2: #f2f1ed; --surface-hover: #f7f7f4;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #6f6d68;
+    --line: rgba(11,11,11,.10); --line-2: rgba(11,11,11,.18);
+    --accent: #2a78d6; --accent-hover: #256abf; --accent-ink: #ffffff; --accent-text: #1c5cab;
+    --good: #0ca30c; --good-text: #006300;
+    --warning: #fab219; --warning-text: #7a5200;
+    --serious: #ec835a; --serious-text: #9a3f17;
+    --critical: #d03b3b; --critical-text: #b02a2a;
+    --brand: #e0a526;
+    --shadow: 0 1px 2px rgba(11,11,11,.05);
+    --shadow-pop: 0 12px 40px rgba(11,11,11,.18), 0 2px 8px rgba(11,11,11,.08);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
   }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --surface-hover: #20201f;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #94928b;
+    --line: rgba(255,255,255,.10); --line-2: rgba(255,255,255,.18);
+    --accent: #3987e5; --accent-hover: #5598e7; --accent-text: #6da7ec;
+    --good-text: #2fbf2f; --warning-text: #fab219; --serious-text: #ec835a; --critical-text: #f07c7c;
+    --shadow: none;
+    --shadow-pop: 0 16px 48px rgba(0,0,0,.6);
+  }
+
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Georgia, 'Times New Roman', serif; }
-  h1, h2, h3 { margin: 0 0 .5rem; color: var(--gold-bright); font-weight: 600; letter-spacing: .5px; }
-  h2 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); }
-  a { color: var(--gold); }
-  button { font: inherit; cursor: pointer; }
-  input { font: inherit; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 1.25rem; }
-  header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); margin-bottom: 1.25rem; }
-  header.top small { color: var(--muted); display: block; }
-  .grid { display: grid; gap: 1rem; }
-  .cols-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
-  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-  .panel { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: 6px; padding: 1rem 1.15rem; min-width: 0; }
-  .pill { display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-size: .78rem; letter-spacing: .5px; text-transform: uppercase; }
-  .pill i { width: .55rem; height: .55rem; border-radius: 50%; background: currentColor; box-shadow: 0 0 .4rem currentColor; }
-  .is-ok { color: var(--ok); } .is-bad { color: var(--bad); } .is-warn { color: var(--warn); } .is-muted { color: var(--faint); } .is-info { color: var(--info); }
-  .btn { min-height: 42px; padding: .55rem 1rem; border-radius: 4px; border: 1px solid var(--gold-bright); background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, #8a6d3b); color: #2a1e08; font-weight: 700; letter-spacing: .4px; }
-  .btn:hover:not(:disabled) { filter: brightness(1.08); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn.secondary { background: rgba(255,255,255,.05); color: var(--text); border-color: var(--line); font-weight: 500; }
-  .btn.danger { background: linear-gradient(180deg, #a8443d, #682823); border-color: #bd5048; color: #fff; }
-  .btn.warn { background: linear-gradient(180deg, #a86b25, #724516); border-color: #c6832e; color: #fff4d7; }
-  .btn.confirm { outline: 2px solid var(--warn); }
-  .actions { display: flex; flex-wrap: wrap; gap: .6rem; }
-  .stat { display: grid; gap: .15rem; padding: .6rem .75rem; background: rgba(0,0,0,.22); border: 1px solid rgba(200,149,47,.16); border-radius: 4px; }
-  .stat small { color: var(--muted); font-size: .68rem; letter-spacing: .5px; text-transform: uppercase; }
-  .stat strong { color: var(--text); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-  .bar { height: .55rem; border-radius: 999px; background: rgba(0,0,0,.4); border: 1px solid rgba(200,149,47,.3); overflow: hidden; margin-top: .3rem; }
-  .bar > span { display: block; height: 100%; background: linear-gradient(90deg, #9c762d, var(--gold-bright)); }
-  .bar.is-hot > span { background: linear-gradient(90deg, #8f2d2d, var(--bad)); }
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th, td { padding: .4rem .5rem; text-align: left; border-bottom: 1px solid rgba(200,149,47,.14); white-space: nowrap; }
-  th { color: var(--gold); font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .table-wrap { overflow-x: auto; }
-  pre.console { margin: 0; max-height: 380px; overflow: auto; padding: .75rem; background: #090806; border: 1px solid var(--line); border-radius: 4px; color: #d9d2bd; font: 12.5px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
-  pre.console .err { color: var(--bad); }
-  .console-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; }
-  .console-head span { color: var(--muted); font-size: .85rem; }
-  .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-  select, input[type=text], input[type=password] { min-height: 40px; padding: .45rem .7rem; border-radius: 4px; border: 1px solid var(--line); background: rgba(12,10,7,.86); color: var(--text); }
-  .notice { padding: .7rem .9rem; border-radius: 4px; border: 1px solid; margin-bottom: 1rem; }
-  .notice.error { color: var(--bad); border-color: rgba(169,64,64,.7); background: rgba(117,31,31,.14); }
-  .notice.ok { color: var(--ok); border-color: rgba(63,135,80,.7); background: rgba(48,116,65,.14); }
-  .login { max-width: 420px; margin: 8vh auto; }
-  .login form { display: grid; gap: .8rem; }
-  .login label { display: grid; gap: .3rem; color: var(--gold); font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; }
-  .muted { color: var(--muted); }
-  .small { font-size: .85rem; }
-  .history li { color: var(--muted); font-size: .85rem; }
-  .history b { color: var(--text); font-weight: 600; }
   [hidden] { display: none !important; }
-  @media (max-width: 640px) {
-    body { font-size: 14px; }
-    .wrap { padding: .75rem; }
-    header.top { flex-direction: column; align-items: flex-start; gap: .5rem; }
-    header.top h1 { font-size: 1.3rem; }
-    header.top .row { width: 100%; justify-content: space-between; }
-    .panel { padding: .85rem .9rem; }
-    .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-    .btn { width: 100%; padding-inline: .6rem; }
-    .cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-    .stat { padding: .5rem .6rem; }
-    .stat strong { font-size: .95rem; }
-    pre.console { max-height: 260px; font-size: 11.5px; }
-    table { font-size: .8rem; }
-    th, td { padding: .3rem .4rem; }
-    .console-head { flex-direction: column; align-items: stretch; }
-    .console-head .row { width: 100%; }
-    .console-head select { flex: 1 1 auto; min-width: 0; }
-    .login { margin: 3vh auto; }
-    .pill { font-size: .7rem; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p { margin: 0; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mono { font-family: var(--mono); font-size: .92em; font-variant-ligatures: none; }
+  .muted { color: var(--ink-3); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .tone-good { --tone: var(--good); --tone-text: var(--good-text); }
+  .tone-warning { --tone: var(--warning); --tone-text: var(--warning-text); }
+  .tone-serious { --tone: var(--serious); --tone-text: var(--serious-text); }
+  .tone-critical { --tone: var(--critical); --tone-text: var(--critical-text); }
+  .tone-info { --tone: var(--accent); --tone-text: var(--accent-text); }
+  .tone-muted { --tone: var(--ink-3); --tone-text: var(--ink-2); }
+
+  /* ------------------------------------------------------------ top bar */
+  .topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--line); }
+  .topbar-inner { max-width: 1240px; margin: 0 auto; padding: 0 20px; height: 56px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 28px; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 8px; background: #171716; display: grid; place-items: center; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+  .brand-mark svg { width: 16px; height: 16px; fill: var(--brand); }
+  .brand small { margin-left: 2px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); font-size: 11px; font-weight: 500; letter-spacing: 0; }
+  .tabs { display: flex; gap: 2px; height: 100%; min-width: 0; }
+  .tab { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 100%; padding: 0 12px; border: 0; background: none; color: var(--ink-3); font-weight: 500; white-space: nowrap; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); }
+  .tab[aria-selected="true"]::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); }
+  .tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  .tools { display: flex; align-items: center; gap: 10px; }
+  .conn { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--tone-text); font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .conn i { width: 7px; height: 7px; border-radius: 50%; background: var(--tone); }
+  .conn.tone-good i { animation: pulse 2.4s ease-in-out infinite; }
+  .user { color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+  .user b { color: var(--ink); font-weight: 600; }
+
+  /* ------------------------------------------------------------ buttons and inputs */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); font-weight: 500; white-space: nowrap; box-shadow: var(--shadow); transition: background .12s, border-color .12s; }
+  .btn:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--ink-3); }
+  .btn:disabled { opacity: .5; }
+  .btn.sm { height: 30px; padding: 0 10px; font-size: 13px; }
+  .btn.primary { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: transparent; }
+  .btn.danger { background: var(--critical); border-color: transparent; color: #fff; }
+  .btn.danger:hover:not(:disabled) { background: #b93232; border-color: transparent; }
+  .btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--ink-2); }
+  .btn.ghost:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--ink); }
+  .btn.icon-only { width: 34px; padding: 0; }
+  .btn[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent-text); }
+  .field { height: 34px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); min-width: 0; }
+  .field:hover { border-color: var(--ink-3); }
+  .field::placeholder { color: var(--ink-3); }
+  select.field { padding-right: 6px; }
+  .search { position: relative; display: flex; flex: 1 1 200px; min-width: 0; }
+  .search .icon { position: absolute; left: 10px; top: 9px; color: var(--ink-3); pointer-events: none; }
+  .search .field { width: 100%; padding-left: 32px; }
+  .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); max-width: 100%; overflow-x: auto; }
+  .segmented button { height: 26px; padding: 0 11px; border: 0; border-radius: 6px; background: none; color: var(--ink-2); font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .segmented button:hover { color: var(--ink); }
+  .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.08); }
+
+  /* ------------------------------------------------------------ layout */
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 20px 20px 48px; display: grid; gap: 16px; }
+  .view { display: grid; gap: 16px; min-width: 0; }
+  .grid { display: grid; gap: 12px; min-width: 0; }
+  .services { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .tiles { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .split { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+  .halves { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); min-width: 0; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 14px 16px 0; }
+  .card-head h2 { font-size: 14px; font-weight: 600; letter-spacing: -.005em; }
+  .card-head p { color: var(--ink-3); font-size: 13px; }
+  .card-body { padding: 14px 16px 16px; }
+  .section-label { margin: 4px 2px -4px; color: var(--ink-3); font-size: 12px; font-weight: 500; }
+
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone-text); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .pill .icon { width: 13px; height: 13px; stroke-width: 2.4; }
+  .spinner { width: 13px; height: 13px; flex: none; border-radius: 50%; border: 2px solid color-mix(in srgb, currentColor 25%, transparent); border-top-color: currentColor; animation: spin .7s linear infinite; }
+
+  /* ------------------------------------------------------------ banner */
+  .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--line)); background: linear-gradient(0deg, color-mix(in srgb, var(--tone) 7%, var(--surface)), color-mix(in srgb, var(--tone) 7%, var(--surface))); box-shadow: var(--shadow); }
+  .banner-icon { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--tone) 18%, transparent); color: var(--tone-text); }
+  .banner-icon .icon { width: 21px; height: 21px; }
+  .banner-icon .spinner { width: 19px; height: 19px; }
+  .banner-text { flex: 1 1 260px; min-width: 0; }
+  .banner-text h1 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .banner-text p { color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
+  .banner-meta { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 12px; white-space: nowrap; }
+
+  /* ------------------------------------------------------------ service cards and stat tiles */
+  .service { padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
+  .service-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .service-name { min-width: 0; }
+  .service-name b { display: block; font-weight: 600; }
+  .service-name span { display: block; color: var(--ink-3); font: 12px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .service-status { color: var(--ink-2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .service-metrics { display: flex; gap: 16px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12px; }
+  .service-metrics b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile { padding: 12px 14px; display: grid; gap: 2px; align-content: start; }
+  .tile-label { color: var(--ink-3); font-size: 12px; }
+  .tile-value { font-size: 20px; font-weight: 600; letter-spacing: -.015em; line-height: 1.3; overflow-wrap: anywhere; }
+  .tile-value.is-small { font-size: 15px; letter-spacing: 0; line-height: 1.7; }
+  .tile-sub { color: var(--ink-3); font-size: 12px; overflow-wrap: anywhere; }
+  .tile-sub.tone-text, .tile-value.tone-text { color: var(--tone-text); }
+  .meter { height: 6px; margin: 6px 0 4px; border-radius: 3px; background: color-mix(in srgb, var(--tone, var(--accent)) 18%, transparent); overflow: hidden; }
+  .meter > span { display: block; height: 100%; min-width: 3px; border-radius: 3px; background: var(--tone, var(--accent)); transition: width .4s ease; }
+
+  /* ------------------------------------------------------------ actions */
+  .action-group + .action-group { margin-top: 14px; }
+  .action-group h3 { margin: 0 0 6px 2px; color: var(--ink-3); font-size: 12px; font-weight: 500; }
+  .action-list { display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .action { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; transition: background .12s; }
+  .action:first-child { border-top: 0; }
+  .action:hover:not(:disabled) { background: var(--surface-hover); }
+  .action:disabled { opacity: .5; }
+  .action.is-running { opacity: 1; background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .action-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
+  .action.is-primary .action-icon { background: var(--accent); color: var(--accent-ink); }
+  .action.is-danger .action-icon { background: color-mix(in srgb, var(--critical) 14%, transparent); color: var(--critical-text); }
+  .action-text { min-width: 0; }
+  .action-text b { display: block; font-weight: 600; }
+  .action-text span { display: block; color: var(--ink-3); font-size: 12.5px; line-height: 1.4; }
+  .action .chev { display: grid; color: var(--ink-3); }
+
+  /* ------------------------------------------------------------ consoles */
+  .console-card { display: flex; flex-direction: column; }
+  .console-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--ink-3); font-size: 12.5px; min-width: 0; }
+  .console-meta .mono { overflow-wrap: anywhere; }
+  .console { flex: 1 1 0; margin: 12px 16px 16px; min-height: 320px; max-height: 620px; overflow: auto; padding: 12px 14px; border-radius: 10px; background: #111110; border: 1px solid rgba(255,255,255,.08); color: #d6d5cc; font: 12.5px/1.55 var(--mono); font-variant-ligatures: none; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-color: #4a4a46 transparent; }
+  .console .err { color: #f59a9a; }
+  .console .warn { color: #f3c969; }
+  .console .empty { color: #8d8b84; font-family: var(--sans); font-size: 13px; }
+  .console.logs { min-height: 420px; max-height: none; height: calc(100vh - 300px); flex: none; }
+  .console.nowrap { white-space: pre; overflow-wrap: normal; }
+  .ln { display: flex; gap: 12px; }
+  .ln time { flex: none; color: #7d7b75; user-select: none; }
+  .ln span { min-width: 0; }
+  .console mark { background: #fab219; color: #111; border-radius: 2px; padding: 0 1px; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 16px 0; }
+  .toolbar .spacer { flex: 1 1 auto; }
+
+  /* ------------------------------------------------------------ tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 12px; text-align: left; border-top: 1px solid var(--line); white-space: nowrap; }
+  th { border-top: 0; color: var(--ink-3); font-size: 12px; font-weight: 500; }
+  th:first-child, td:first-child { padding-left: 16px; }
+  th:last-child, td:last-child { padding-right: 16px; }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td .meter { min-width: 90px; margin: 0; }
+  td.empty { color: var(--ink-3); text-align: center; padding: 22px 16px; white-space: normal; }
+
+  /* ------------------------------------------------------------ trend tiles */
+  .trend { padding: 14px 16px 12px; display: grid; gap: 2px; }
+  .trend-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .trend-value { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.25; }
+  .spark { position: relative; height: 56px; margin-top: 6px; touch-action: pan-y; }
+  .spark svg { display: block; overflow: visible; }
+  .spark-line { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .spark-area { fill: color-mix(in srgb, var(--ink-3) 12%, transparent); stroke: none; }
+  .spark-end { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+  .spark-cross { stroke: var(--line-2); stroke-width: 1; }
+  .spark-tip { position: absolute; top: -8px; transform: translate(-50%, -100%); padding: 3px 8px; border-radius: 6px; background: var(--ink); color: var(--surface); font-size: 12px; font-weight: 500; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
+  .spark-empty { height: 100%; display: grid; place-items: center; color: var(--ink-3); font-size: 12px; border: 1px dashed var(--line-2); border-radius: 8px; }
+  .trend-foot { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-3); font-size: 12px; }
+
+  /* ------------------------------------------------------------ login, dialog, toasts */
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+  .login-card { width: 100%; max-width: 380px; padding: 28px; display: grid; gap: 18px; }
+  .login-card .brand-mark { width: 40px; height: 40px; border-radius: 11px; }
+  .login-card .brand-mark svg { width: 22px; height: 22px; }
+  .login-card h1 { font-size: 20px; font-weight: 600; letter-spacing: -.015em; }
+  .login-card p { color: var(--ink-2); font-size: 13px; }
+  .login-card form { display: grid; gap: 14px; }
+  .login-card label { display: grid; gap: 6px; color: var(--ink-2); font-size: 13px; font-weight: 500; }
+  .login-card .field, .login-card .btn { height: 40px; }
+  .notice { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 8px; background: color-mix(in srgb, var(--tone) 12%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent); color: var(--tone-text); font-size: 13px; }
+  .notice .icon { margin-top: 2px; }
+  .login-foot { color: var(--ink-3); font-size: 12px; text-align: center; }
+
+  dialog.modal { width: min(440px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line-2); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-pop); }
+  dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
+  .modal form { padding: 22px; display: grid; gap: 14px; }
+  .modal-head { display: flex; gap: 14px; align-items: flex-start; }
+  .modal-head .banner-icon { width: 36px; height: 36px; }
+  .modal-head .banner-icon .icon { width: 18px; height: 18px; }
+  .modal h2 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .modal p { margin-top: 4px; color: var(--ink-2); font-size: 13.5px; }
+  .modal-cmd { padding: 8px 10px; border-radius: 8px; background: var(--surface-2); color: var(--ink-2); font: 12px var(--mono); font-variant-ligatures: none; overflow-wrap: anywhere; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  .toasts { position: fixed; z-index: 50; right: 16px; bottom: 16px; display: grid; gap: 8px; width: min(380px, calc(100vw - 32px)); }
+  .toast { display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px 11px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-2); box-shadow: var(--shadow-pop); font-size: 13px; animation: rise .18s ease-out; }
+  .toast .icon { margin-top: 2px; color: var(--tone-text); }
+  .toast p { flex: 1; overflow-wrap: anywhere; }
+  .toast button { border: 0; background: none; color: var(--ink-3); padding: 0 2px; font-size: 16px; line-height: 1.2; }
+
+  .foot { max-width: 1240px; margin: 0 auto; padding: 0 20px 28px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; color: var(--ink-3); font-size: 12px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; } .spinner { border-top-color: transparent; } }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: minmax(0, 1fr); }
+    .console { flex: none; height: 360px; min-height: 0; }
+  }
+  @media (max-width: 760px) {
+    .topbar-inner { grid-template-columns: 1fr auto; grid-template-areas: "brand tools" "tabs tabs"; height: auto; gap: 0 12px; padding: 0 16px; }
+    .brand { grid-area: brand; height: 52px; }
+    .tools { grid-area: tools; }
+    .tabs { grid-area: tabs; height: 42px; margin: 0 -16px; padding: 0 6px; border-top: 1px solid var(--line); overflow-x: auto; }
+    .user, .conn span, #logout span { display: none; }
+    .conn { padding: 7px; }
+    #logout { width: 34px; padding: 0; }
+    .wrap { padding: 14px 14px 40px; gap: 14px; }
+    .view { gap: 14px; }
+    .services { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .service { padding: 12px; }
+    .service-top { flex-direction: column-reverse; gap: 6px; }
+    .service-metrics { flex-direction: column; gap: 2px; }
+    .services > :last-child:nth-child(odd), .tiles > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .banner { padding: 14px; }
+    .banner-meta { width: 100%; justify-content: space-between; }
+    .banner.is-compact { padding: 10px 14px; }
+    .banner.is-compact p, .banner.is-compact .banner-meta { display: none; }
+    .banner.is-compact .banner-icon { width: 30px; height: 30px; }
+    .banner.is-compact .banner-icon .icon { width: 17px; height: 17px; }
+    .banner.is-compact h1 { font-size: 15px; }
+    .ln { gap: 10px; }
+    .ln-date { display: none; }
+    .btn, .field { height: 38px; }
+    .btn.sm { height: 34px; }
+    .segmented button { height: 30px; }
+    .console.logs { height: calc(100vh - 330px); min-height: 320px; }
+    .foot { padding: 0 14px 24px; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <section id="login" class="login panel" hidden>
-    <h1>Kingdoms of Chaos · Control</h1>
-    <p class="muted small">Sign in with a game administrator account. Only the database needs to be running.</p>
-    <div id="login-error" class="notice error" hidden></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 4l4.5 8L21 8l-2 12H5L3 8z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-rollback" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.7 9.7 0 0 0-6.7 2.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-update" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 4-4 4 4"/><path d="M12 16V8"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<section id="login" class="login" hidden>
+  <div class="card login-card">
+    <div class="brand-mark"><svg aria-hidden="true"><use href="#i-crown"/></svg></div>
+    <div>
+      <h1>Sign in to Control</h1>
+      <p>Use a Kingdoms of Chaos administrator account. Only the database needs to be running.</p>
+    </div>
+    <div id="login-error" class="notice tone-critical" role="alert" hidden></div>
     <form id="login-form">
-      <label>Username<input id="login-user" type="text" autocomplete="username" required maxlength="16"></label>
-      <label>Password<input id="login-pass" type="password" autocomplete="current-password" required maxlength="72"></label>
-      <button class="btn" type="submit">Sign in</button>
+      <label>Username<input class="field" id="login-user" type="text" autocomplete="username" required maxlength="16" autocapitalize="none" spellcheck="false"></label>
+      <label>Password<input class="field" id="login-pass" type="password" autocomplete="current-password" required maxlength="72"></label>
+      <button class="btn primary" id="login-submit" type="submit">Sign in</button>
     </form>
-  </section>
-
-  <div id="app" hidden>
-    <header class="top">
-      <div>
-        <h1>Kingdoms of Chaos · Control</h1>
-        <small id="app-dir"></small>
-      </div>
-      <div class="row">
-        <span class="muted small" id="whoami"></span>
-        <button class="btn secondary" id="logout">Sign out</button>
-      </div>
-    </header>
-
-    <div id="flash" class="notice error" hidden></div>
-
-    <div class="grid cols-2">
-      <section class="panel">
-        <h2>Game server</h2>
-        <div class="row" id="containers" style="margin-bottom:.75rem"></div>
-        <div class="grid cols-3" id="game-stats"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Actions</h2>
-        <p class="muted small" id="job-state">No action is running.</p>
-        <div class="actions" id="actions"></div>
-        <p class="muted small" style="margin:.75rem 0 0">
-          <b>Update</b> rebuilds the image and applies pending migrations with a backup; <b>Full update</b> always backs up, migrates, and reseeds;
-          <b>Roll back</b> restores the previous image. Actions run one at a time.
-        </p>
-      </section>
-    </div>
-
-    <section class="panel" style="margin-top:1rem">
-      <div class="console-head">
-        <h2 style="margin:0">Action output</h2>
-        <span id="job-meta">Output of the current or last action appears here.</span>
-      </div>
-      <pre class="console" id="console">Nothing has run yet.</pre>
-      <ul class="history" id="history"></ul>
-    </section>
-
-    <div class="grid cols-2" style="margin-top:1rem">
-      <section class="panel">
-        <h2>Host</h2>
-        <div class="grid cols-3" id="host-stats"></div>
-        <h3 style="margin-top:1rem;font-size:.9rem">Disks</h3>
-        <div class="table-wrap"><table id="disks"><thead><tr><th>Path</th><th>Size</th><th>Used</th><th>Free</th><th style="width:30%">Use</th></tr></thead><tbody></tbody></table></div>
-      </section>
-
-      <section class="panel">
-        <h2>Containers</h2>
-        <div class="table-wrap"><table id="docker-stats"><thead><tr><th>Container</th><th>CPU</th><th>Memory</th><th>Net I/O</th><th>Disk I/O</th></tr></thead><tbody></tbody></table></div>
-        <h3 style="margin-top:1rem;font-size:.9rem">Docker disk usage</h3>
-        <div class="table-wrap"><table id="docker-df"><thead><tr><th>Type</th><th>Total</th><th>Active</th><th>Size</th><th>Reclaimable</th></tr></thead><tbody></tbody></table></div>
-      </section>
-    </div>
-
-    <section class="panel" style="margin-top:1rem">
-      <div class="console-head">
-        <h2 style="margin:0">Logs</h2>
-        <div class="row">
-          <select id="log-service"><option value="web">tkoc-web</option><option value="tick">tkoc-tick</option><option value="db">database</option><option value="control">control panel</option></select>
-          <select id="log-lines"><option>100</option><option selected>200</option><option>500</option><option>1000</option></select>
-          <button class="btn secondary" id="log-refresh">Refresh</button>
-        </div>
-      </div>
-      <pre class="console" id="logs">Choose a service and refresh.</pre>
-    </section>
+    <div class="login-foot">Sessions last 12 hours on this device.</div>
   </div>
+</section>
+
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#overview">
+        <span class="brand-mark"><svg aria-hidden="true"><use href="#i-crown"/></svg></span>
+        Kingdoms of Chaos <small>Control</small>
+      </a>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" data-tab="overview" aria-selected="true">Overview <span class="tab-dot" id="tab-dot" hidden></span></button>
+        <button class="tab" role="tab" data-tab="system" aria-selected="false">System</button>
+        <button class="tab" role="tab" data-tab="logs" aria-selected="false">Logs</button>
+      </nav>
+      <div class="tools">
+        <span class="conn tone-muted" id="conn" title="Connection to the control panel"><i></i><span>Connecting</span></span>
+        <span class="user" id="whoami"></span>
+        <button class="btn ghost icon-only" id="theme" type="button" aria-label="Switch colour theme" title="Switch colour theme"></button>
+        <button class="btn sm" id="logout" type="button" title="Sign out"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg><span>Sign out</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="banner tone-muted" id="banner">
+      <div class="banner-icon" id="banner-icon"><span class="spinner"></span></div>
+      <div class="banner-text"><h1 id="banner-title">Checking status</h1><p id="banner-sub">Contacting the control panel.</p></div>
+      <div class="banner-meta"><span id="updated"></span><button class="btn sm" id="refresh" type="button"><svg class="icon" aria-hidden="true"><use href="#i-restart"/></svg>Refresh</button></div>
+    </section>
+
+    <div class="view" id="view-overview" role="tabpanel">
+      <h2 class="section-label">Services</h2>
+      <div class="grid services" id="services"></div>
+
+      <h2 class="section-label">Game</h2>
+      <div class="grid tiles" id="game-stats"></div>
+
+      <div class="grid split">
+        <section class="card">
+          <div class="card-head"><h2>Actions</h2><p id="job-state">One action runs at a time.</p></div>
+          <div class="card-body" id="actions"></div>
+        </section>
+
+        <section class="card console-card" id="console-card">
+          <div class="card-head">
+            <h2>Action output</h2>
+            <div class="console-meta"><span id="job-pill"></span><button class="btn ghost sm" id="console-copy" type="button"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>Copy</button></div>
+          </div>
+          <div class="console-meta" id="job-meta" style="padding:2px 16px 0">Output of the current or last action streams here.</div>
+          <pre class="console" id="console" tabindex="0" aria-label="Action output"><span class="empty">Nothing has run since the panel started.</span></pre>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-head"><h2>Recent actions</h2><p>Kept until the panel restarts</p></div>
+        <div class="table-wrap" style="margin-top:8px"><table id="history"><thead><tr><th>Action</th><th>Result</th><th>Started by</th><th class="num">Duration</th><th class="num">Finished</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </div>
+
+    <div class="view" id="view-system" role="tabpanel" hidden>
+      <div class="grid halves">
+        <section class="card trend">
+          <div class="trend-head"><span class="tile-label">Load average</span><span class="tile-sub" id="load-sub"></span></div>
+          <div class="trend-value" id="load-value">–</div>
+          <div class="meter" id="load-meter"><span style="width:0"></span></div>
+          <div class="spark" id="spark-load"></div>
+          <div class="trend-foot"><span>Last hour, 1 min load</span><span id="load-range"></span></div>
+        </section>
+        <section class="card trend">
+          <div class="trend-head"><span class="tile-label">Memory</span><span class="tile-sub" id="mem-sub"></span></div>
+          <div class="trend-value" id="mem-value">–</div>
+          <div class="meter" id="mem-meter"><span style="width:0"></span></div>
+          <div class="spark" id="spark-mem"></div>
+          <div class="trend-foot"><span>Last hour, % used</span><span id="mem-range"></span></div>
+        </section>
+      </div>
+
+      <div class="grid tiles" id="host-stats"></div>
+
+      <section class="card">
+        <div class="card-head"><h2>Disks</h2></div>
+        <div class="table-wrap" style="margin-top:8px"><table id="disks"><thead><tr><th>Path</th><th style="width:28%">Usage</th><th class="num">Used</th><th class="num">Free</th><th class="num">Size</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <div class="grid halves">
+        <section class="card">
+          <div class="card-head"><h2>Containers</h2><p>Live resource use</p></div>
+          <div class="table-wrap" style="margin-top:8px"><table id="docker-stats"><thead><tr><th>Container</th><th class="num">CPU</th><th class="num">Memory</th><th class="num">Net I/O</th><th class="num">Disk I/O</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2>Docker disk usage</h2><p>Prune Docker clears dangling images</p></div>
+          <div class="table-wrap" style="margin-top:8px"><table id="docker-df"><thead><tr><th>Type</th><th class="num">Total</th><th class="num">Active</th><th class="num">Size</th><th class="num">Reclaimable</th></tr></thead><tbody></tbody></table></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="view" id="view-logs" role="tabpanel" hidden>
+      <section class="card console-card">
+        <div class="toolbar">
+          <div class="segmented" id="log-service" role="group" aria-label="Service">
+            <button type="button" data-service="web" aria-pressed="true">Web</button>
+            <button type="button" data-service="tick" aria-pressed="false">Tick</button>
+            <button type="button" data-service="db" aria-pressed="false">Database</button>
+            <button type="button" data-service="control" aria-pressed="false">Control panel</button>
+          </div>
+          <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input class="field" id="log-filter" type="search" placeholder="Filter lines" aria-label="Filter log lines" spellcheck="false"></label>
+          <select class="field" id="log-lines" aria-label="Number of lines"><option value="100">100 lines</option><option value="200" selected>200 lines</option><option value="500">500 lines</option><option value="1000">1000 lines</option></select>
+          <button class="btn" id="log-follow" type="button" aria-pressed="false" title="Reload every 5 seconds">Follow</button>
+          <button class="btn" id="log-wrap" type="button" aria-pressed="true">Wrap</button>
+          <button class="btn icon-only" id="log-copy" type="button" aria-label="Copy shown lines" title="Copy shown lines"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+          <button class="btn icon-only" id="log-download" type="button" aria-label="Download shown lines" title="Download shown lines"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg></button>
+          <button class="btn icon-only" id="log-refresh" type="button" aria-label="Reload logs" title="Reload logs"><svg class="icon" aria-hidden="true"><use href="#i-restart"/></svg></button>
+        </div>
+        <div class="console-meta" id="log-meta" style="padding:10px 16px 0">Loading…</div>
+        <div class="console logs" id="logs" tabindex="0" aria-label="Container logs"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot"><span class="mono" id="app-dir"></span><span id="panel-note"></span></footer>
 </div>
+
+<dialog class="modal" id="confirm" aria-labelledby="confirm-title">
+  <form method="dialog">
+    <div class="modal-head">
+      <div class="banner-icon" id="confirm-icon"></div>
+      <div><h2 id="confirm-title"></h2><p id="confirm-body"></p></div>
+    </div>
+    <div class="modal-cmd" id="confirm-cmd"></div>
+    <div class="modal-actions">
+      <button class="btn" value="cancel" autofocus>Cancel</button>
+      <button class="btn" value="confirm" id="confirm-ok"></button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
 (() => {
   const $ = id => document.getElementById(id);
+  const esc = text => String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+  const pad = value => String(value).padStart(2, '0');
+  const stripAnsi = text => String(text).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
+
   const fmtBytes = bytes => {
-    if (!Number.isFinite(bytes)) return '—';
+    if (!Number.isFinite(bytes)) return '–';
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     let value = bytes, index = 0;
     while (value >= 1024 && index < units.length - 1) { value /= 1024; index += 1; }
     return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
   };
   const fmtDuration = seconds => {
-    const d = Math.floor(seconds / 86400), h = Math.floor((seconds % 86400) / 3600), m = Math.floor((seconds % 3600) / 60);
-    return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+    seconds = Math.max(0, Math.round(seconds));
+    const d = Math.floor(seconds / 86400), h = Math.floor((seconds % 86400) / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
+    return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : m ? `${m}m ${s}s` : `${s}s`;
   };
-  const fmtTime = iso => iso ? new Date(iso).toLocaleString() : '—';
-  const esc = text => String(text).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+  const fmtClock = seconds => {
+    seconds = Math.max(0, Math.round(seconds));
+    const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
+    return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+  };
+  const fmtTime = iso => iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '–';
+  const fmtHour = value => new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  // Docker prints "312MiB / 15.6GiB"; keep the container's own share and space the unit.
+  const fmtDockerMemory = usage => String(usage ?? '').split('/')[0].trim().replace(/^([\d.]+)([A-Za-z]+)$/, '$1 $2');
+  const fmtAgo = iso => {
+    if (!iso) return 'never';
+    const seconds = Math.round((now() - new Date(iso).getTime()) / 1000);
+    if (seconds < 10) return 'just now';
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  // The game clock comes from the server, so count down against the server's
+  // clock rather than this device's, which may be minutes out.
+  let clockSkew = 0;
+  const now = () => Date.now() + clockSkew;
+
+  const state = {
+    actions: [],
+    job: null,
+    currentJobId: null,
+    status: null,
+    stats: null,
+    lastStatusAt: 0,
+    pollOk: false,
+    streamOk: false,
+    tab: 'overview',
+    logService: 'web',
+    logLines: [],
+    logContainer: '',
+    logLoadedAt: 0,
+  };
+  let timers = [];
+  let events = null;
+
+  /** Writes innerHTML only when it changed, so polling never resets hover or selection. */
+  function setHtml(element, html) {
+    if (element.__html === html) return;
+    element.__html = html;
+    element.innerHTML = html;
+  }
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -194,35 +547,79 @@
       cache: 'no-store',
     });
     const body = await response.json().catch(() => ({}));
-    if (response.status === 401) { showLogin(); throw new Error(body.error || 'Sign in required'); }
+    if (response.status === 401) {
+      showLogin($('app').hidden ? '' : 'Your session has expired. Sign in again.');
+      throw new Error(body.error || 'Sign in required');
+    }
     if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
     return body;
   }
 
-  let timers = [];
-  let events = null;
-  let actions = [];
-  let pendingConfirm = null;
-  let currentJobId = null;
+  // ---------------------------------------------------------------- shell
 
-  function showLogin() {
+  function toast(message, tone = 'info') {
+    const icons = { good: 'check', critical: 'x', warning: 'alert', info: 'info' };
+    const item = document.createElement('div');
+    item.className = `toast tone-${tone}`;
+    item.innerHTML = `${icon(icons[tone] || 'info')}<p>${esc(message)}</p><button type="button" aria-label="Dismiss">×</button>`;
+    item.querySelector('button').addEventListener('click', () => item.remove());
+    $('toasts').appendChild(item);
+    setTimeout(() => item.remove(), tone === 'critical' ? 10000 : 5000);
+  }
+
+  function setConnection() {
+    const live = state.pollOk && state.streamOk;
+    const tone = live ? 'good' : state.pollOk ? 'warning' : 'critical';
+    $('conn').className = `conn tone-${tone}`;
+    $('conn').lastElementChild.textContent = live ? 'Live' : state.pollOk ? 'Reconnecting' : 'Offline';
+  }
+
+  function renderTheme() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    $('theme').innerHTML = icon(dark ? 'sun' : 'moon');
+  }
+
+  function showLogin(message = '') {
     stopPolling();
     $('login').hidden = false;
     $('app').hidden = true;
+    $('login-error').hidden = !message;
+    if (message) $('login-error').innerHTML = `${icon('alert')}<span>${esc(message)}</span>`;
+    $('login-user').focus();
   }
 
   function stopPolling() {
     timers.forEach(clearInterval);
     timers = [];
     if (events) { events.close(); events = null; }
+    state.streamOk = false;
   }
 
-  function flash(message, ok = false) {
-    const box = $('flash');
-    box.hidden = !message;
-    box.className = `notice ${ok ? 'ok' : 'error'}`;
-    box.textContent = message || '';
-    if (message) setTimeout(() => { if (box.textContent === message) box.hidden = true; }, 8000);
+  function startPolling() {
+    timers.forEach(clearInterval);
+    timers = [
+      setInterval(refreshStatus, 6000),
+      setInterval(refreshStats, 20000),
+      setInterval(tick, 1000),
+      setInterval(() => { if (state.tab === 'logs' && $('log-follow').getAttribute('aria-pressed') === 'true') refreshLogs(true); }, 5000),
+    ];
+  }
+
+  function selectTab(name, updateHash = true) {
+    if (!['overview', 'system', 'logs'].includes(name)) name = 'overview';
+    state.tab = name;
+    document.querySelectorAll('.tab').forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.tab === name)));
+    for (const view of ['overview', 'system', 'logs']) $(`view-${view}`).hidden = view !== name;
+    $('banner').classList.toggle('is-compact', name !== 'overview');
+    if (updateHash && location.hash !== `#${name}`) history.replaceState(null, '', `#${name}`);
+    if (name === 'system' && state.stats) renderStats(state.stats);
+    if (name === 'logs' && now() - state.logLoadedAt > 5000) refreshLogs();
+    renderTabDot();
+  }
+
+  function renderTabDot() {
+    const running = state.job && state.job.exitCode === null;
+    $('tab-dot').hidden = !(running && state.tab !== 'overview');
   }
 
   async function boot() {
@@ -230,68 +627,282 @@
       const session = await api('/api/session');
       $('login').hidden = true;
       $('app').hidden = false;
-      $('whoami').textContent = `Signed in as ${session.user.username}`;
+      $('whoami').innerHTML = `Signed in as <b>${esc(session.user.username)}</b>`;
       $('app-dir').textContent = session.appDir;
-      actions = session.actions;
-      renderActions(null);
+      state.actions = session.actions;
+      renderActions();
+      selectTab(location.hash.slice(1), false);
       await Promise.all([refreshStatus(), refreshStats()]);
       openEvents();
-      timers.push(setInterval(refreshStatus, 6000));
-      timers.push(setInterval(refreshStats, 20000));
+      startPolling();
     } catch {
       showLogin();
     }
   }
 
-  function renderActions(job) {
-    const running = job && job.exitCode === null;
-    const kinds = { stop: 'danger', rollback: 'warn', 'update-full': 'warn', prune: 'secondary', restart: 'secondary' };
-    const confirmNeeded = new Set(['stop', 'rollback', 'update-full', 'restart', 'prune']);
-    $('actions').innerHTML = actions.map(action => {
-      const confirming = pendingConfirm === action.id;
-      return `<button class="btn ${kinds[action.id] || ''} ${confirming ? 'confirm' : ''}" data-action="${action.id}" ${running ? 'disabled' : ''}>${confirming ? `Confirm ${action.label.toLowerCase()}?` : action.label}</button>`;
-    }).join('');
-    $('actions').querySelectorAll('button').forEach(button => {
-      button.addEventListener('click', async () => {
-        const id = button.dataset.action;
-        if (confirmNeeded.has(id) && pendingConfirm !== id) {
-          pendingConfirm = id;
-          renderActions(job);
-          setTimeout(() => { if (pendingConfirm === id) { pendingConfirm = null; renderActions(job); } }, 5000);
-          return;
-        }
-        pendingConfirm = null;
-        try {
-          const result = await api('/api/action', { method: 'POST', body: JSON.stringify({ action: id }) });
-          $('console').textContent = '';
-          currentJobId = result.job.id;
-          renderJob(result.job);
-          flash(`${result.job.label} started.`, true);
-        } catch (error) {
-          flash(error.message);
-        }
-      });
+  // ---------------------------------------------------------------- overview
+
+  const SERVICE_NAMES = { web: 'Web', tick: 'Tick worker', db: 'Database', control: 'Control panel' };
+
+  function containerTone(container) {
+    if (container.state === 'missing') return { tone: 'muted', icon: 'minus', label: 'Not created' };
+    if (container.state === 'running') {
+      if (/\(unhealthy\)/.test(container.status)) return { tone: 'warning', icon: 'alert', label: 'Unhealthy' };
+      if (/health: starting/.test(container.status)) return { tone: 'info', icon: 'info', label: 'Starting' };
+      return { tone: 'good', icon: 'check', label: 'Running' };
+    }
+    if (container.state === 'restarting' || container.state === 'paused') return { tone: 'warning', icon: 'alert', label: container.state === 'paused' ? 'Paused' : 'Restarting' };
+    if (container.state === 'dead') return { tone: 'critical', icon: 'x', label: 'Dead' };
+    return { tone: 'muted', icon: 'minus', label: 'Stopped' };
+  }
+
+  function healthTone(health) {
+    if (!health.reachable) return { tone: 'critical', icon: 'x', label: 'Unreachable' };
+    if (health.status === 'ok') return { tone: 'good', icon: 'check', label: 'Passing' };
+    if (health.status === 'degraded') return { tone: 'warning', icon: 'alert', label: 'Degraded' };
+    return { tone: 'critical', icon: 'x', label: health.status ? health.status[0].toUpperCase() + health.status.slice(1) : `HTTP ${health.httpStatus}` };
+  }
+
+  function overallStatus(status) {
+    const job = status.job;
+    if (job && job.exitCode === null) {
+      return { tone: 'info', icon: null, title: `${job.label} in progress`, text: `Started ${fmtAgo(job.startedAt)} by ${job.startedBy}. Output streams below as it runs.` };
+    }
+    const byRole = Object.fromEntries(status.containers.map(container => [container.role, container]));
+    const web = byRole.web, worker = byRole.tick;
+    if (!status.game.connected) {
+      return { tone: 'critical', icon: 'x', title: 'Database unreachable', text: status.game.error || 'The control panel cannot query the game database.' };
+    }
+    if (!web?.running && !worker?.running) {
+      return { tone: 'serious', icon: 'minus', title: 'Game is stopped', text: 'The web and tick containers are not running. Use Start to bring the game back up.' };
+    }
+    if (!web?.running || !worker?.running) {
+      const down = web?.running ? worker : web;
+      return { tone: 'serious', icon: 'alert', title: 'Game is only partly running', text: `${down?.name || 'A container'} is not running. Restart recreates both containers.` };
+    }
+    if (!status.health.reachable) {
+      return { tone: 'critical', icon: 'x', title: 'Game is not responding', text: 'The containers are up, but the health check could not be reached.' };
+    }
+    if (status.health.status !== 'ok') {
+      const text = status.health.status === 'degraded' ? 'The health check reports that ticks are running late.' : 'The health check reports that the game cannot reach its database.';
+      return { tone: status.health.status === 'degraded' ? 'warning' : 'critical', icon: 'alert', title: `Game is ${status.health.status || 'unhealthy'}`, text };
+    }
+    const unhealthy = status.containers.find(container => /\(unhealthy\)/.test(container.status));
+    if (unhealthy) {
+      return { tone: 'warning', icon: 'alert', title: 'A container is unhealthy', text: `Docker reports ${unhealthy.name} as unhealthy.${status.autoHeal?.enabled ? ' Auto-heal restarts the game if this persists.' : ''}` };
+    }
+    return { tone: 'good', icon: 'check', title: 'All systems operational', text: 'The game, tick worker, and database are running and the health check passes.' };
+  }
+
+  function renderBanner(status) {
+    const overall = overallStatus(status);
+    $('banner').className = `banner tone-${overall.tone}${state.tab === 'overview' ? '' : ' is-compact'}`;
+    setHtml($('banner-icon'), overall.icon ? icon(overall.icon) : '<span class="spinner"></span>');
+    $('banner-title').textContent = overall.title;
+    $('banner-sub').textContent = overall.text;
+  }
+
+  function renderServices() {
+    const status = state.status;
+    if (!status) return;
+    const usage = new Map((state.stats?.docker.containers || []).map(entry => [entry.name, entry]));
+    const cards = status.containers.map(container => {
+      const tone = containerTone(container);
+      const stats = usage.get(container.name);
+      const memory = stats ? fmtDockerMemory(stats.memory) : null;
+      return `<article class="card service" title="${esc(container.image)}">
+        <div class="service-top">
+          <div class="service-name"><b>${esc(SERVICE_NAMES[container.role] || container.role)}</b><span>${esc(container.name)}</span></div>
+          <span class="pill tone-${tone.tone}">${icon(tone.icon)}${tone.label}</span>
+        </div>
+        <div class="service-status">${esc(container.status || '–')}</div>
+        <div class="service-metrics"><span>CPU <b>${stats ? esc(stats.cpu) : '–'}</b></span><span>Memory <b>${memory ? esc(memory) : '–'}</b></span></div>
+      </article>`;
+    });
+    const health = status.health;
+    const tone = healthTone(health);
+    const detail = health.reachable
+      ? `HTTP ${esc(health.httpStatus)}${health.database ? ` · database ${esc(health.database)}` : ''}`
+      : 'No response from the game';
+    cards.push(`<article class="card service">
+      <div class="service-top">
+        <div class="service-name"><b>Health check</b><span>/api/health</span></div>
+        <span class="pill tone-${tone.tone}">${icon(tone.icon)}${esc(tone.label)}</span>
+      </div>
+      <div class="service-status">${detail}</div>
+      <div class="service-metrics"><span>Auto-heal <b>${status.autoHeal ? (status.autoHeal.enabled ? 'On' : 'Off') : '–'}</b></span><span>Last restart <b>${status.autoHeal?.lastRestartAt ? esc(fmtAgo(status.autoHeal.lastRestartAt)) : 'never'}</b></span></div>
+    </article>`);
+    setHtml($('services'), cards.join(''));
+  }
+
+  function renderGame(status) {
+    const game = status.game;
+    if (!game.connected) {
+      setHtml($('game-stats'), `<div class="card tile" style="grid-column:1/-1"><span class="tile-label">Game state</span><span class="tile-value is-small">Unavailable while the database is unreachable</span><span class="tile-sub">${esc(game.error || '')}</span></div>`);
+      return;
+    }
+    const tile = (label, value, sub = '') => `<div class="card tile"><span class="tile-label">${label}</span><span class="tile-value">${value}</span>${sub}</div>`;
+    const apocalypse = game.phase === 'Apocalypse';
+    setHtml($('game-stats'), [
+      `<div class="card tile"><span class="tile-label">Next tick</span><span class="tile-value" id="tick-countdown">–</span><div class="meter"><span id="tick-progress" style="width:0"></span></div><span class="tile-sub" id="tick-at"></span></div>`,
+      tile('Age', esc(game.age ?? '–'), `<span class="tile-sub">Tick ${esc(Number(game.tick ?? 0).toLocaleString())}</span>`),
+      tile('Season', esc(game.season ?? '–'), `<span class="tile-sub ${apocalypse ? 'tone-serious tone-text' : ''}">${apocalypse ? 'Apocalypse phase' : esc(game.phase || '')}</span>`),
+      tile('Last tick', `<span id="tick-last">${esc(fmtAgo(game.lastTickAt))}</span>`, `<span class="tile-sub">${esc(fmtTime(game.lastTickAt))}</span>`),
+      tile('Living provinces', esc(Number(game.provinces).toLocaleString())),
+      tile('Accounts', esc(Number(game.users).toLocaleString())),
+      tile('Database size', esc(fmtBytes(game.databaseBytes))),
+    ].join(''));
+    tick();
+  }
+
+  /** Once a second: everything that counts up or down between polls. */
+  function tick() {
+    const status = state.status;
+    if (state.lastStatusAt) $('updated').textContent = `Updated ${Math.max(0, Math.round((Date.now() - state.lastStatusAt) / 1000))}s ago`;
+    const countdown = $('tick-countdown');
+    if (status?.game.connected && countdown) {
+      const next = status.game.nextTickAt ? new Date(status.game.nextTickAt).getTime() : null;
+      const last = status.game.lastTickAt ? new Date(status.game.lastTickAt).getTime() : null;
+      if (next === null) {
+        countdown.textContent = 'Not scheduled';
+        countdown.className = 'tile-value is-small';
+        $('tick-at').textContent = 'The tick worker has not set a time';
+      } else {
+        const remaining = (next - now()) / 1000;
+        const overdue = remaining < -30;
+        countdown.textContent = overdue ? `${fmtDuration(-remaining)} late` : fmtClock(remaining);
+        countdown.className = `tile-value num${overdue ? ' tone-warning tone-text' : ''}`;
+        $('tick-at').textContent = `Due at ${fmtHour(next)}`;
+        const span = last && next > last ? next - last : null;
+        $('tick-progress').style.width = span ? `${Math.min(100, Math.max(0, ((now() - last) / span) * 100))}%` : '0';
+        $('tick-progress').parentElement.className = `meter${overdue ? ' tone-warning' : ''}`;
+      }
+      if ($('tick-last')) $('tick-last').textContent = fmtAgo(status.game.lastTickAt);
+    }
+    const elapsed = $('job-elapsed');
+    if (elapsed && state.job && state.job.exitCode === null) elapsed.textContent = fmtClock((now() - new Date(state.job.startedAt).getTime()) / 1000);
+  }
+
+  // ---------------------------------------------------------------- actions
+
+  const ACTION_META = {
+    start: { icon: 'play', group: 'Lifecycle', text: 'Bring the web and tick containers up.' },
+    stop: {
+      icon: 'stop', group: 'Lifecycle', danger: true, text: 'Take the game offline until it is started again.',
+      confirm: { title: 'Stop the game?', body: 'Players will be signed out of a working game and ticks will stop until you press Start. The database and this panel keep running.', cta: 'Stop the game' },
+    },
+    restart: {
+      icon: 'restart', group: 'Lifecycle', text: 'Recreate both containers. A few seconds of downtime.',
+      confirm: { title: 'Restart the game?', body: 'The web and tick containers are recreated from the current image. Players see a short interruption.', cta: 'Restart' },
+    },
+    update: { icon: 'update', group: 'Deploy', primary: true, text: 'Rebuild and deploy. Backs up and migrates only if needed, and rolls back if the new build is unhealthy.' },
+    'update-full': {
+      icon: 'layers', group: 'Deploy', text: 'Always pause, back up, migrate, and reseed before deploying.',
+      confirm: { title: 'Run a full update?', body: 'The game is paused for a database backup, migration, and reseed of reference data even when no migration is pending. This takes longer than a normal update.', cta: 'Run full update' },
+    },
+    rollback: {
+      icon: 'rollback', group: 'Deploy', text: 'Bring back the previous application image.',
+      confirm: { title: 'Roll back to the previous build?', body: 'Only the application containers are rolled back. Database migrations are forward-only, so restore the matching backup first if the last update changed the schema.', cta: 'Roll back', danger: true },
+    },
+    prune: {
+      icon: 'trash', group: 'Maintenance', text: 'Delete dangling Docker images to free disk space.',
+      confirm: { title: 'Prune Docker images?', body: 'Dangling images across the whole Docker host are deleted. Images in use, including the rollback image, are kept.', cta: 'Prune images' },
+    },
+  };
+
+  function renderActions() {
+    const groups = new Map();
+    for (const action of state.actions) {
+      const meta = ACTION_META[action.id] || { icon: 'bolt', group: 'Other', text: '' };
+      if (!groups.has(meta.group)) groups.set(meta.group, []);
+      groups.get(meta.group).push({ ...action, meta });
+    }
+    $('actions').innerHTML = [...groups].map(([group, list]) => `<div class="action-group"><h3>${esc(group)}</h3><div class="action-list">${list.map(action => `
+      <button type="button" class="action${action.meta.primary ? ' is-primary' : ''}${action.meta.danger ? ' is-danger' : ''}" data-action="${esc(action.id)}">
+        <span class="action-icon">${icon(action.meta.icon)}</span>
+        <span class="action-text"><b>${esc(action.label)}</b><span>${esc(action.meta.text)}</span></span>
+        <span class="chev">${icon('chevron')}</span>
+      </button>`).join('')}</div></div>`).join('');
+    $('actions').querySelectorAll('.action').forEach(button => button.addEventListener('click', () => runAction(button.dataset.action)));
+    syncActions();
+  }
+
+  function syncActions() {
+    const running = state.job && state.job.exitCode === null;
+    $('actions').querySelectorAll('.action').forEach(button => {
+      const mine = running && state.job.action === button.dataset.action;
+      button.disabled = Boolean(running);
+      button.classList.toggle('is-running', Boolean(mine));
+      const meta = ACTION_META[button.dataset.action] || { icon: 'bolt' };
+      setHtml(button.querySelector('.action-icon'), mine ? '<span class="spinner"></span>' : icon(meta.icon));
     });
   }
 
+  function confirmAction(action, meta) {
+    const dialog = $('confirm');
+    if (typeof dialog.showModal !== 'function') return Promise.resolve(window.confirm(meta.confirm.title));
+    const danger = meta.danger || meta.confirm.danger;
+    $('confirm-icon').className = `banner-icon tone-${danger ? 'critical' : 'warning'}`;
+    $('confirm-icon').innerHTML = icon(meta.icon);
+    $('confirm-title').textContent = meta.confirm.title;
+    $('confirm-body').textContent = meta.confirm.body;
+    $('confirm-cmd').textContent = action.command || action.label;
+    $('confirm-ok').textContent = meta.confirm.cta;
+    $('confirm-ok').className = `btn ${danger ? 'danger' : 'primary'}`;
+    dialog.returnValue = '';
+    return new Promise(resolve => {
+      dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true });
+      dialog.showModal();
+    });
+  }
+
+  async function runAction(id) {
+    const action = state.actions.find(entry => entry.id === id);
+    const meta = ACTION_META[id];
+    if (!action) return;
+    if (meta?.confirm && !(await confirmAction(action, meta))) return;
+    try {
+      const result = await api('/api/action', { method: 'POST', body: JSON.stringify({ action: id }) });
+      // The event stream may already have announced this job and begun printing it.
+      if (state.currentJobId !== result.job.id) { $('console').textContent = ''; state.currentJobId = result.job.id; }
+      renderJob(result.job);
+      toast(`${result.job.label} started.`, 'info');
+      if (state.tab !== 'overview') selectTab('overview');
+      $('console-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (error) {
+      toast(error.message, 'critical');
+    }
+  }
+
   function renderJob(job) {
+    const previous = state.job;
+    state.job = job;
     const running = job && job.exitCode === null;
-    $('job-state').textContent = !job
-      ? 'No action is running.'
-      : running
-        ? `${job.label} is running (started ${fmtTime(job.startedAt)} by ${job.startedBy})…`
-        : `Last action: ${job.label} ${job.exitCode === 0 ? 'succeeded' : `failed (exit ${job.exitCode})`} at ${fmtTime(job.finishedAt)}.`;
-    $('job-meta').textContent = job ? `${job.command} · ${job.lineCount ?? 0} lines` : 'Output of the current or last action appears here.';
-    renderActions(job);
+    if (previous && previous.exitCode === null && job && job.id === previous.id && job.exitCode !== null) {
+      toast(job.exitCode === 0 ? `${job.label} finished successfully.` : `${job.label} failed with exit code ${job.exitCode}.`, job.exitCode === 0 ? 'good' : 'critical');
+    }
+    $('job-state').textContent = running ? `${job.label} is running` : 'One action runs at a time.';
+    setHtml($('job-pill'), !job ? ''
+      : running ? `<span class="pill tone-info"><span class="spinner"></span>Running <span class="num" id="job-elapsed"></span></span>`
+      : job.exitCode === 0 ? `<span class="pill tone-good">${icon('check')}Succeeded</span>`
+      : `<span class="pill tone-critical">${icon('x')}Failed · exit ${esc(job.exitCode)}</span>`);
+    setHtml($('job-meta'), job
+      ? `<span><b style="color:var(--ink);font-weight:600">${esc(job.label)}</b> by ${esc(job.startedBy)}</span><span class="mono">${esc(job.command)}</span><span>${running ? `started ${esc(fmtAgo(job.startedAt))}` : `${esc(fmtDuration((new Date(job.finishedAt) - new Date(job.startedAt)) / 1000))} · finished ${esc(fmtTime(job.finishedAt))}`}</span>`
+      : 'Output of the current or last action streams here.');
+    // Keep the banner in step with the event stream instead of waiting for the next poll.
+    if (state.status) { state.status.job = job; renderBanner(state.status); }
+    syncActions();
+    renderTabDot();
+    tick();
   }
 
   function appendLine(entry) {
     const pre = $('console');
-    if (pre.textContent === 'Nothing has run yet.') pre.textContent = '';
+    if (pre.querySelector('.empty')) pre.textContent = '';
     const stuck = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 8;
     const span = document.createElement('span');
-    span.className = entry.stream === 'err' ? 'err' : '';
-    span.textContent = `${entry.line}\n`;
+    if (entry.stream === 'err') span.className = 'err';
+    span.textContent = `${stripAnsi(entry.line)}\n`;
     pre.appendChild(span);
     if (stuck) pre.scrollTop = pre.scrollHeight;
   }
@@ -299,128 +910,332 @@
   function openEvents() {
     events = new EventSource('/api/events');
     events.addEventListener('hello', async () => {
+      state.streamOk = true;
+      setConnection();
       try {
         const { job } = await api('/api/job');
         if (job) {
           $('console').textContent = '';
           job.lines.forEach(appendLine);
-          currentJobId = job.id;
-          renderJob(job);
+          state.currentJobId = job.id;
+          const { lines, ...summary } = job;
+          renderJob(summary);
         }
       } catch {}
     });
     events.addEventListener('line', event => appendLine(JSON.parse(event.data)));
     events.addEventListener('job', event => {
       const job = JSON.parse(event.data);
-      if (job && job.id !== currentJobId) { $('console').textContent = ''; currentJobId = job.id; }
+      if (job && job.id !== state.currentJobId) { $('console').textContent = ''; state.currentJobId = job.id; }
       renderJob(job);
-      if (job && job.exitCode !== null) { refreshStatus(); refreshHistory(); }
+      if (job && job.exitCode !== null) { refreshStatus(); refreshStats(); }
     });
-  }
-
-  async function refreshHistory() {
-    try { const status = await api('/api/status'); renderHistory(status.history); } catch {}
+    events.onerror = () => { state.streamOk = false; setConnection(); };
   }
 
   function renderHistory(history) {
-    $('history').innerHTML = (history || []).slice(0, 8).map(job =>
-      `<li><b>${esc(job.label)}</b> · ${job.exitCode === 0 ? 'ok' : `exit ${job.exitCode}`} · ${fmtTime(job.finishedAt)} · ${esc(job.startedBy)}</li>`
-    ).join('');
+    const rows = (history || []).slice(0, 10).map(job => {
+      const ok = job.exitCode === 0;
+      const seconds = job.finishedAt ? (new Date(job.finishedAt) - new Date(job.startedAt)) / 1000 : null;
+      return `<tr><td><b style="font-weight:600">${esc(job.label)}</b></td><td><span class="pill tone-${ok ? 'good' : 'critical'}">${icon(ok ? 'check' : 'x')}${ok ? 'Succeeded' : `Failed · exit ${esc(job.exitCode)}`}</span></td><td>${esc(job.startedBy)}</td><td class="num">${seconds === null ? '–' : esc(fmtDuration(seconds))}</td><td class="num" title="${esc(fmtTime(job.finishedAt))}">${esc(fmtAgo(job.finishedAt))}</td></tr>`;
+    });
+    setHtml($('history').querySelector('tbody'), rows.join('') || '<tr><td colspan="5" class="empty">No actions have run since the panel started.</td></tr>');
   }
 
   async function refreshStatus() {
+    if (document.hidden) return;
     try {
       const status = await api('/api/status');
-      const states = status.containers.map(container => {
-        const tone = container.running ? 'is-ok' : 'is-bad';
-        return `<span class="pill ${tone}" title="${esc(container.status)} · ${esc(container.image)}"><i></i>${esc(container.name)} · ${esc(container.state)}</span>`;
-      });
-      const names = new Set(status.containers.map(container => container.name));
-      for (const expected of ['tkoc-web', 'tkoc-tick']) {
-        if (!names.has(expected)) states.push(`<span class="pill is-muted"><i></i>${expected} · missing</span>`);
-      }
-      const health = status.health;
-      states.push(health.reachable
-        ? `<span class="pill ${health.status === 'ok' ? 'is-ok' : 'is-warn'}"><i></i>health · ${esc(health.status || health.httpStatus)}</span>`
-        : `<span class="pill is-bad"><i></i>health · unreachable</span>`);
-      $('containers').innerHTML = states.join('');
-      const game = status.game;
-      const nextTick = game.nextTickAt ? Math.max(0, Math.round((new Date(game.nextTickAt) - new Date(status.time)) / 60000)) : null;
-      const cells = game.connected ? [
-        ['Age / tick', `${game.age} / ${game.tick}`],
-        ['Season', `${game.season}${game.phase === 'Apocalypse' ? ' · Apocalypse' : ''}`],
-        ['Next tick', nextTick === null ? 'not scheduled' : `in ${nextTick} min`],
-        ['Last tick', fmtTime(game.lastTickAt)],
-        ['Living provinces', game.provinces],
-        ['Accounts', game.users],
-        ['Database size', fmtBytes(game.databaseBytes)],
-      ] : [['Database', `unreachable: ${game.error || 'unknown error'}`]];
-      $('game-stats').innerHTML = cells.map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${esc(value)}</strong></div>`).join('');
-      if (!currentJobId && status.job) { currentJobId = status.job.id; }
+      clockSkew = new Date(status.time).getTime() - Date.now();
+      state.status = status;
+      state.lastStatusAt = Date.now();
+      state.pollOk = true;
+      if (!state.currentJobId && status.job) state.currentJobId = status.job.id;
       renderJob(status.job);
+      renderBanner(status);
+      renderServices();
+      renderGame(status);
       renderHistory(status.history);
-    } catch (error) {
-      flash(error.message);
+    } catch {
+      state.pollOk = false;
     }
+    setConnection();
+  }
+
+  // ---------------------------------------------------------------- system
+
+  const meterTone = percent => percent > 90 ? ' tone-critical' : percent > 75 ? ' tone-warning' : '';
+
+  function renderSpark(id, points, key, format, ceiling) {
+    const box = $(id);
+    const width = Math.floor(box.clientWidth);
+    if (!width) return;
+    if (points.length < 2) { box.__spark = null; setHtml(box, '<div class="spark-empty">Collecting samples, check back in a minute</div>'); return; }
+    const height = 56, inset = 5;
+    const top = Math.max(ceiling || 0, ...points.map(point => point[key])) || 1;
+    const x = index => inset + (index / (points.length - 1)) * (width - inset * 2);
+    const y = value => height - inset - (value / top) * (height - inset * 2);
+    const line = points.map((point, index) => `${index ? 'L' : 'M'}${x(index).toFixed(1)} ${y(point[key]).toFixed(1)}`).join('');
+    const last = points.length - 1;
+    box.__spark = { points, key, format, x, y };
+    setHtml(box, `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Trend over the last hour">
+      <path class="spark-area" d="${line}L${x(last).toFixed(1)} ${height - inset}L${x(0).toFixed(1)} ${height - inset}Z"/>
+      <path class="spark-line" d="${line}"/>
+      <line class="spark-cross" y1="0" y2="${height}" hidden/>
+      <circle class="spark-end" cx="${x(last).toFixed(1)}" cy="${y(points[last][key]).toFixed(1)}" r="4"/>
+    </svg><div class="spark-tip" hidden></div>`);
+  }
+
+  function bindSpark(id) {
+    const box = $(id);
+    box.addEventListener('pointermove', event => {
+      const spark = box.__spark;
+      if (!spark) return;
+      const bounds = box.getBoundingClientRect();
+      const ratio = (event.clientX - bounds.left - 5) / Math.max(1, bounds.width - 10);
+      const index = Math.min(spark.points.length - 1, Math.max(0, Math.round(ratio * (spark.points.length - 1))));
+      const point = spark.points[index];
+      const cross = box.querySelector('.spark-cross'), tip = box.querySelector('.spark-tip'), dot = box.querySelector('.spark-end');
+      cross.removeAttribute('hidden');
+      cross.setAttribute('x1', spark.x(index));
+      cross.setAttribute('x2', spark.x(index));
+      dot.setAttribute('cx', spark.x(index));
+      dot.setAttribute('cy', spark.y(point[spark.key]));
+      tip.hidden = false;
+      tip.textContent = `${spark.format(point[spark.key])} · ${fmtHour(point.at)}`;
+      tip.style.left = `${Math.min(bounds.width - 50, Math.max(50, spark.x(index)))}px`;
+    });
+    box.addEventListener('pointerleave', () => {
+      const spark = box.__spark;
+      if (!spark) return;
+      const last = spark.points.length - 1;
+      box.querySelector('.spark-cross').setAttribute('hidden', '');
+      box.querySelector('.spark-tip').hidden = true;
+      box.querySelector('.spark-end').setAttribute('cx', spark.x(last));
+      box.querySelector('.spark-end').setAttribute('cy', spark.y(spark.points[last][spark.key]));
+    });
+  }
+
+  function renderStats(stats) {
+    const host = stats.host;
+    const history = stats.history || [];
+    const range = (key, format) => history.length < 2 ? '' : `Low ${format(Math.min(...history.map(point => point[key])))} · high ${format(Math.max(...history.map(point => point[key])))}`;
+
+    const loadPercent = Math.min(100, Math.round((host.load[0] / Math.max(1, host.cpus)) * 100));
+    $('load-value').textContent = host.load[0].toFixed(2);
+    $('load-sub').textContent = `5 min ${host.load[1].toFixed(2)} · 15 min ${host.load[2].toFixed(2)} · ${host.cpus} CPUs`;
+    $('load-meter').className = `meter${meterTone(loadPercent)}`;
+    $('load-meter').firstElementChild.style.width = `${loadPercent}%`;
+    $('load-meter').title = `${loadPercent}% of ${host.cpus} CPUs`;
+    $('load-range').textContent = range('load', value => value.toFixed(2));
+
+    const memPercent = Math.round((host.memory.usedBytes / host.memory.totalBytes) * 100);
+    $('mem-value').textContent = `${memPercent}%`;
+    $('mem-sub').textContent = `${fmtBytes(host.memory.usedBytes)} of ${fmtBytes(host.memory.totalBytes)}`;
+    $('mem-meter').className = `meter${meterTone(memPercent)}`;
+    $('mem-meter').firstElementChild.style.width = `${memPercent}%`;
+    $('mem-range').textContent = range('memoryPercent', value => `${Math.round(value)}%`);
+
+    if (state.tab === 'system') {
+      renderSpark('spark-load', history, 'load', value => value.toFixed(2), 1);
+      renderSpark('spark-mem', history, 'memoryPercent', value => `${Math.round(value)}%`, 100);
+    }
+
+    const tile = (label, value, sub = '') => `<div class="card tile"><span class="tile-label">${label}</span><span class="tile-value is-small">${value}</span><span class="tile-sub">${sub}</span></div>`;
+    setHtml($('host-stats'), [
+      tile('Host', esc(host.hostname), esc(host.platform)),
+      tile('Host uptime', esc(fmtDuration(host.uptimeSeconds))),
+      tile('Panel uptime', esc(fmtDuration(host.panelUptimeSeconds))),
+      tile('Free memory', esc(fmtBytes(host.memory.freeBytes))),
+    ].join(''));
+
+    setHtml($('disks').querySelector('tbody'), stats.disks.map(disk =>
+      `<tr><td class="mono" title="${esc(disk.filesystem)} mounted on ${esc(disk.mount)}">${esc(disk.path)}</td><td><div style="display:flex;align-items:center;gap:10px"><div class="meter${meterTone(disk.usePercent)}" style="flex:1"><span style="width:${Number(disk.usePercent) || 0}%"></span></div><span class="num" style="width:3.2em;text-align:right">${esc(disk.usePercent)}%</span></div></td><td class="num">${fmtBytes(disk.usedBytes)}</td><td class="num">${fmtBytes(disk.availableBytes)}</td><td class="num">${fmtBytes(disk.totalBytes)}</td></tr>`
+    ).join('') || '<tr><td colspan="5" class="empty">No disks reported.</td></tr>');
+    setHtml($('docker-stats').querySelector('tbody'), stats.docker.containers.map(container =>
+      `<tr><td class="mono">${esc(container.name)}</td><td class="num">${esc(container.cpu)}</td><td class="num" title="${esc(container.memory)}">${esc(fmtDockerMemory(container.memory))} <span class="muted">(${esc(container.memoryPercent)})</span></td><td class="num">${esc(container.network)}</td><td class="num">${esc(container.block)}</td></tr>`
+    ).join('') || '<tr><td colspan="5" class="empty">No game containers are running.</td></tr>');
+    setHtml($('docker-df').querySelector('tbody'), stats.docker.usage.map(row =>
+      `<tr><td>${esc(row.type)}</td><td class="num">${esc(row.total)}</td><td class="num">${esc(row.active)}</td><td class="num">${esc(row.size)}</td><td class="num">${esc(row.reclaimable)}</td></tr>`
+    ).join('') || '<tr><td colspan="5" class="empty">Docker did not report disk usage.</td></tr>');
   }
 
   async function refreshStats() {
+    if (document.hidden) return;
     try {
       const stats = await api('/api/stats');
-      const host = stats.host;
-      const memPercent = Math.round((host.memory.usedBytes / host.memory.totalBytes) * 100);
-      $('host-stats').innerHTML = [
-        ['Load (1 / 5 / 15 min)', host.load.join(' / ')],
-        ['CPUs', host.cpus],
-        ['Uptime', fmtDuration(host.uptimeSeconds)],
-        ['Memory', `${fmtBytes(host.memory.usedBytes)} of ${fmtBytes(host.memory.totalBytes)}<div class="bar ${memPercent > 90 ? 'is-hot' : ''}"><span style="width:${memPercent}%"></span></div>`],
-        ['Host', `${esc(host.hostname)}<br><span class="muted small">${esc(host.platform)}</span>`],
-        ['Panel uptime', fmtDuration(host.panelUptimeSeconds)],
-      ].map(([label, value]) => `<div class="stat"><small>${label}</small><strong>${value}</strong></div>`).join('');
-      $('disks').querySelector('tbody').innerHTML = stats.disks.map(disk =>
-        `<tr><td title="${esc(disk.filesystem)} on ${esc(disk.mount)}">${esc(disk.path)}</td><td class="num">${fmtBytes(disk.totalBytes)}</td><td class="num">${fmtBytes(disk.usedBytes)}</td><td class="num">${fmtBytes(disk.availableBytes)}</td><td><div class="bar ${disk.usePercent > 90 ? 'is-hot' : ''}"><span style="width:${disk.usePercent}%"></span></div><span class="muted small">${disk.usePercent}%</span></td></tr>`
-      ).join('') || '<tr><td colspan="5" class="muted">No disks reported.</td></tr>';
-      $('docker-stats').querySelector('tbody').innerHTML = stats.docker.containers.map(container =>
-        `<tr><td>${esc(container.name)}</td><td class="num">${esc(container.cpu)}</td><td class="num">${esc(container.memory)} (${esc(container.memoryPercent)})</td><td class="num">${esc(container.network)}</td><td class="num">${esc(container.block)}</td></tr>`
-      ).join('') || '<tr><td colspan="5" class="muted">No running containers.</td></tr>';
-      $('docker-df').querySelector('tbody').innerHTML = stats.docker.usage.map(row =>
-        `<tr><td>${esc(row.type)}</td><td class="num">${esc(row.total)}</td><td class="num">${esc(row.active)}</td><td class="num">${esc(row.size)}</td><td class="num">${esc(row.reclaimable)}</td></tr>`
-      ).join('');
+      state.stats = stats;
+      renderStats(stats);
+      renderServices();
+    } catch {}
+  }
+
+  // ---------------------------------------------------------------- logs
+
+  function highlight(text, query) {
+    if (!query) return esc(text);
+    const lower = text.toLowerCase();
+    let out = '', from = 0;
+    for (;;) {
+      const at = lower.indexOf(query, from);
+      if (at < 0) break;
+      out += `${esc(text.slice(from, at))}<mark>${esc(text.slice(at, at + query.length))}</mark>`;
+      from = at + query.length;
+    }
+    return out + esc(text.slice(from));
+  }
+
+  function shownLogLines() {
+    const query = $('log-filter').value.trim().toLowerCase();
+    return query ? state.logLines.filter(line => line.toLowerCase().includes(query)) : state.logLines;
+  }
+
+  function renderLogs(keepScroll = false) {
+    const box = $('logs');
+    const query = $('log-filter').value.trim().toLowerCase();
+    const lines = shownLogLines();
+    const stuck = !keepScroll || box.scrollTop + box.clientHeight >= box.scrollHeight - 8;
+    box.innerHTML = lines.map(line => {
+      const match = /^(\d{4}-\d\d-\d\dT[\d:]+)(?:\.(\d{1,3})\d*)?Z\s?(.*)$/.exec(line);
+      const text = match ? match[3] : line;
+      const level = /\b(error|fatal|exception|unhandled|panic)\b|ECONNREFUSED|ETIMEDOUT/i.test(text) ? ' err' : /\bwarn(ing)?\b/i.test(text) ? ' warn' : '';
+      let stamp = '';
+      if (match) {
+        const date = new Date(`${match[1]}Z`);
+        stamp = `<time title="${esc(date.toLocaleString())}"><span class="ln-date">${pad(date.getMonth() + 1)}-${pad(date.getDate())} </span>${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}</time>`;
+      }
+      return `<div class="ln${level}">${stamp}<span>${highlight(text, query)}</span></div>`;
+    }).join('') || `<span class="empty">${state.logLines.length ? 'No lines match the filter.' : `No output from ${esc(state.logContainer || 'this container')}.`}</span>`;
+    if (stuck) box.scrollTop = box.scrollHeight;
+    $('log-meta').innerHTML = `<span class="mono">${esc(state.logContainer)}</span><span>${query ? `${lines.length} of ${state.logLines.length} lines match` : `${state.logLines.length} lines`}</span><span>loaded ${esc(new Date(state.logLoadedAt - clockSkew).toLocaleTimeString())}</span>`;
+  }
+
+  async function refreshLogs(quiet = false) {
+    if (document.hidden && quiet) return;
+    if (!quiet) $('log-meta').textContent = 'Loading…';
+    try {
+      const result = await api(`/api/logs?service=${encodeURIComponent(state.logService)}&lines=${encodeURIComponent($('log-lines').value)}`);
+      state.logContainer = result.container;
+      state.logLines = stripAnsi(result.lines || '').split('\n').filter(Boolean);
+      state.logLoadedAt = now();
+      renderLogs(quiet);
     } catch (error) {
-      flash(error.message);
+      if (!quiet) { state.logLines = []; $('logs').innerHTML = `<span class="empty">${esc(error.message)}</span>`; $('log-meta').textContent = 'Could not load logs'; }
     }
   }
 
-  async function refreshLogs() {
-    $('logs').textContent = 'Loading…';
+  async function copyText(text) {
     try {
-      const result = await api(`/api/logs?service=${encodeURIComponent($('log-service').value)}&lines=${encodeURIComponent($('log-lines').value)}`);
-      $('logs').textContent = result.lines || `No output from ${result.container}.`;
-      $('logs').scrollTop = $('logs').scrollHeight;
-    } catch (error) {
-      $('logs').textContent = error.message;
-    }
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+    } catch {}
+    // The panel is normally opened over plain HTTP on the LAN, where the
+    // clipboard API is unavailable, so fall back to a selection copy.
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch {}
+    area.remove();
+    return ok;
   }
+
+  async function copyWithToast(text, what) {
+    if (!text.trim()) return toast(`There is no ${what} to copy yet.`, 'info');
+    toast((await copyText(text)) ? `Copied ${what} to the clipboard.` : 'This browser blocked the copy. Select the text and copy it manually.', 'info');
+  }
+
+  // ---------------------------------------------------------------- wiring
 
   $('login-form').addEventListener('submit', async event => {
     event.preventDefault();
     $('login-error').hidden = true;
+    const submit = $('login-submit');
+    submit.disabled = true;
+    submit.innerHTML = '<span class="spinner"></span>Signing in';
     try {
       await api('/api/login', { method: 'POST', body: JSON.stringify({ username: $('login-user').value, password: $('login-pass').value }) });
       $('login-pass').value = '';
       await boot();
     } catch (error) {
-      $('login-error').textContent = error.message;
+      $('login-error').innerHTML = `${icon('alert')}<span>${esc(error.message)}</span>`;
       $('login-error').hidden = false;
+    } finally {
+      submit.disabled = false;
+      submit.textContent = 'Sign in';
     }
   });
   $('logout').addEventListener('click', async () => {
     await api('/api/logout', { method: 'POST' }).catch(() => {});
     showLogin();
   });
-  $('log-refresh').addEventListener('click', refreshLogs);
-  $('log-service').addEventListener('change', refreshLogs);
+  $('theme').addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('tkoc-control-theme', next); } catch {}
+    renderTheme();
+  });
+  $('refresh').addEventListener('click', async () => {
+    $('refresh').disabled = true;
+    await Promise.all([refreshStatus(), refreshStats()]);
+    $('refresh').disabled = false;
+  });
+  document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => selectTab(tab.dataset.tab)));
+  document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); selectTab('overview'); });
+  window.addEventListener('hashchange', () => selectTab(location.hash.slice(1), false));
+  $('confirm').addEventListener('click', event => { if (event.target === $('confirm')) $('confirm').close('cancel'); });
+  $('console-copy').addEventListener('click', () => copyWithToast($('console').querySelector('.empty') ? '' : $('console').textContent, 'action output'));
 
+  $('log-service').querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+    state.logService = button.dataset.service;
+    $('log-service').querySelectorAll('button').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
+    refreshLogs();
+  }));
+  $('log-lines').addEventListener('change', () => refreshLogs());
+  $('log-refresh').addEventListener('click', () => refreshLogs());
+  $('log-filter').addEventListener('input', () => renderLogs());
+  $('log-follow').addEventListener('click', () => {
+    const on = $('log-follow').getAttribute('aria-pressed') !== 'true';
+    $('log-follow').setAttribute('aria-pressed', String(on));
+    if (on) refreshLogs(true);
+  });
+  $('log-wrap').addEventListener('click', () => {
+    const on = $('log-wrap').getAttribute('aria-pressed') !== 'true';
+    $('log-wrap').setAttribute('aria-pressed', String(on));
+    $('logs').classList.toggle('nowrap', !on);
+  });
+  $('log-copy').addEventListener('click', () => copyWithToast(shownLogLines().join('\n'), 'log lines'));
+  $('log-download').addEventListener('click', () => {
+    const lines = shownLogLines();
+    if (!lines.length) return toast('There are no log lines to download yet.', 'info');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([`${lines.join('\n')}\n`], { type: 'text/plain' }));
+    link.download = `${state.logContainer || state.logService}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.log`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  });
+
+  bindSpark('spark-load');
+  bindSpark('spark-mem');
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (state.stats && state.tab === 'system') renderStats(state.stats); }, 150);
+  });
+  // Polling pauses while the tab is in the background; catch up on return.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !$('app').hidden) { refreshStatus(); refreshStats(); }
+  });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    let stored = null;
+    try { stored = localStorage.getItem('tkoc-control-theme'); } catch {}
+    if (stored) return;
+    document.documentElement.dataset.theme = event.matches ? 'dark' : 'light';
+    renderTheme();
+  });
+
+  renderTheme();
   boot();
 })();
 </script>

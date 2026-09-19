@@ -357,17 +357,21 @@ function summarize(job) {
 
 async function containerStatus() {
   const result = await run('docker', ['ps', '-a', '--format', '{{json .}}'], { timeout: 15_000 });
-  const wanted = new Set(Object.values(config.containers));
-  return parseJsonLines(result.stdout)
-    .filter(entry => wanted.has(entry.Names))
-    .map(entry => ({
-      name: entry.Names,
+  const found = new Map(parseJsonLines(result.stdout).map(entry => [entry.Names, entry]));
+  // One entry per expected container, in a fixed order, so the page can show
+  // a container that was never created instead of silently omitting it.
+  return Object.entries(config.containers).map(([role, name]) => {
+    const entry = found.get(name);
+    if (!entry) return { role, name, state: 'missing', status: 'Not created', image: '', running: false };
+    return {
+      role,
+      name,
       state: entry.State,
       status: entry.Status,
       image: entry.Image,
       running: entry.State === 'running',
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    };
+  });
 }
 
 async function healthStatus() {
@@ -475,6 +479,23 @@ function hostStats() {
   };
 }
 
+// A rolling hour of host load and memory, so the trend lines are already
+// populated when the page opens rather than starting empty on every visit.
+const hostHistory = [];
+
+function sampleHost() {
+  const total = os.totalmem();
+  hostHistory.push({
+    at: Date.now(),
+    load: Math.round(os.loadavg()[0] * 100) / 100,
+    memoryPercent: Math.round(((total - os.freemem()) / total) * 1000) / 10,
+  });
+  if (hostHistory.length > 120) hostHistory.shift();
+}
+
+sampleHost();
+setInterval(sampleHost, 30_000).unref();
+
 // ---------------------------------------------------------------- server
 
 async function handle(request, response) {
@@ -482,7 +503,13 @@ async function handle(request, response) {
   const session = readSession(request);
 
   if (request.method === 'GET' && url.pathname === '/') {
-    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+    });
     response.end(page);
     return;
   }
@@ -515,7 +542,7 @@ async function handle(request, response) {
   if (!session) return json(response, 401, { error: 'Sign in required' });
 
   if (request.method === 'GET' && url.pathname === '/api/session') {
-    return json(response, 200, { user: { id: session.id, username: session.username }, appDir: config.appDir, actions: Object.entries(ACTIONS).map(([id, action]) => ({ id, label: action.label })) });
+    return json(response, 200, { user: { id: session.id, username: session.username }, appDir: config.appDir, actions: Object.entries(ACTIONS).map(([id, action]) => ({ id, label: action.label, command: action.command.join(' ') })) });
   }
 
   if (request.method === 'GET' && url.pathname === '/api/status') {
@@ -527,12 +554,16 @@ async function handle(request, response) {
       game,
       job: summarize(jobs.current),
       history: jobs.history,
+      autoHeal: {
+        enabled: autoHeal.enabled,
+        lastRestartAt: autoHeal.lastRestartAt ? new Date(autoHeal.lastRestartAt).toISOString() : null,
+      },
     });
   }
 
   if (request.method === 'GET' && url.pathname === '/api/stats') {
     const [disks, docker] = await Promise.all([diskUsage(), dockerStats()]);
-    return json(response, 200, { time: new Date().toISOString(), host: hostStats(), disks, docker });
+    return json(response, 200, { time: new Date().toISOString(), host: hostStats(), history: hostHistory, disks, docker });
   }
 
   if (request.method === 'GET' && url.pathname === '/api/logs') {
