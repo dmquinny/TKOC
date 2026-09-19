@@ -13,6 +13,28 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: "3400"
+    # Wait for MySQL before starting Next.js. tkoc_db is in the root compose
+    # file, so depends_on cannot order the two, and after a reboot Docker starts
+    # both at once. If web wins that race its database pool is left empty and
+    # never recovers: the game stopped ticking for 24 hours after the 18 Sep
+    # 2026 reboot. MySQL only sends its greeting once it is ready for
+    # connections, so wait for that rather than just an open port.
+    command:
+      - sh
+      - -c
+      - |
+        until node -e '
+          const url = new URL(process.env.DATABASE_URL);
+          const socket = require("net").connect(Number(url.port) || 3306, url.hostname);
+          socket.setTimeout(3000);
+          socket.once("data", () => process.exit(0));
+          socket.once("error", () => process.exit(1));
+          socket.once("timeout", () => process.exit(1));
+        '; do
+          echo "Waiting for MySQL to accept connections..."
+          sleep 2
+        done
+        exec node server.js
     network_mode: host
     restart: unless-stopped
     init: true

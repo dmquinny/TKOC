@@ -17,9 +17,11 @@
  *   TKOC_APP_DIR             folder holding compose.production.yaml and scripts/
  *   COMPOSE_FILE             default compose.production.yaml
  *   TKOC_HEALTH_URL          default http://127.0.0.1:3400/api/health
+ *   CONTROL_AUTOHEAL         default on; 0 disables restarting an unhealthy game
  */
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
+import { connect } from 'node:net';
 import { existsSync, readFileSync } from 'node:fs';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import os from 'node:os';
@@ -64,6 +66,11 @@ const ACTIONS = {
 };
 
 const page = readFileSync(path.join(here, 'page.html'), 'utf8');
+// After a reboot Docker starts every container at once, ignoring depends_on,
+// so the panel can come up before MySQL. A pool created while MySQL is still
+// starting stays empty and never recovers: the panel could not sign anyone in
+// for a day after the 18 Sep 2026 reboot. Wait until MySQL is ready first.
+await waitForDatabase(config.databaseUrl);
 const pool = createPool(config.databaseUrl);
 const loginAttempts = new Map();
 const jobs = { current: null, history: [] };
@@ -236,6 +243,25 @@ function describeDatabaseError(error) {
   if (/Access denied/i.test(text)) return `MySQL rejected the application login at ${where}: the password in .env.production does not match the database.`;
   if (/Unknown database/i.test(text)) return `The database named in DATABASE_URL does not exist at ${where}.`;
   return `(${error?.code || 'error'} at ${where})`;
+}
+
+/** Resolves once MySQL sends its greeting, which it only does when ready for connections. */
+async function waitForDatabase(databaseUrl) {
+  const url = new URL(databaseUrl.replace(/^mysql:/, 'mariadb:'));
+  const host = url.hostname || '127.0.0.1';
+  const port = Number(url.port) || 3306;
+  for (let attempt = 1; ; attempt += 1) {
+    const ready = await new Promise(resolve => {
+      const socket = connect(port, host);
+      socket.setTimeout(3000);
+      socket.once('data', () => { socket.destroy(); resolve(true); });
+      socket.once('error', () => resolve(false));
+      socket.once('timeout', () => { socket.destroy(); resolve(false); });
+    });
+    if (ready) return;
+    if (attempt === 1 || attempt % 15 === 0) console.log(`[control] waiting for MySQL at ${host}:${port}...`);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
 }
 
 function parseJsonLines(text) {
@@ -550,6 +576,47 @@ async function handle(request, response) {
   }
 
   json(response, 404, { error: 'Not found' });
+}
+
+// ---------------------------------------------------------------- auto-heal
+
+// Docker marks tkoc-web unhealthy but never restarts it. When the game's
+// database pool wedges (as it did for 24 hours after the 18 Sep 2026 reboot),
+// recreating the containers is the only cure, so run the Restart action.
+// It only acts on a running container that Docker reports unhealthy on two
+// checks in a row: a deliberately stopped game or one mid-update is left alone,
+// startJob refuses while another action is running, and the cooldown stops a
+// database outage turning into a restart loop.
+const autoHeal = {
+  enabled: process.env.CONTROL_AUTOHEAL !== '0',
+  intervalMs: 60_000,
+  cooldownMs: 15 * 60_000,
+  strikes: 0,
+  lastRestartAt: 0,
+};
+
+async function autoHealCheck() {
+  if (jobs.current && jobs.current.exitCode === null) return;
+  const result = await run('docker', [
+    'inspect', '-f', '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{end}}', config.containers.web,
+  ], { timeout: 15_000 });
+  const [state, health] = result.stdout.trim().split(/\s+/);
+  if (state !== 'running' || health !== 'unhealthy') {
+    autoHeal.strikes = 0;
+    return;
+  }
+  autoHeal.strikes += 1;
+  if (autoHeal.strikes < 2 || Date.now() - autoHeal.lastRestartAt < autoHeal.cooldownMs) return;
+  if (startJob('restart', { username: 'auto-heal' })) {
+    autoHeal.lastRestartAt = Date.now();
+    autoHeal.strikes = 0;
+  }
+}
+
+if (autoHeal.enabled) {
+  setInterval(() => {
+    autoHealCheck().catch(error => console.error('[control] auto-heal check failed:', error));
+  }, autoHeal.intervalMs);
 }
 
 const server = createServer((request, response) => {

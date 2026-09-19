@@ -37,7 +37,9 @@ or from the app directory, `npm run control:up`. Then open
 `http://<host>:3401`. Because it lives in the root compose project rather
 than the game's own, the game's update never rebuilds or restarts it, and
 stopping the game never stops the panel. Rebuild it the same way after
-changing anything under `control/`.
+changing anything under `control/`. On startup the panel waits until MySQL is
+ready before it starts listening, so it cannot come up with a broken database
+connection after a reboot.
 
 The container mounts the Docker socket, the app directory, and the appdata
 directory at the same absolute paths the host uses, so the game's compose
@@ -68,6 +70,16 @@ are required. Optional variables:
 | `TKOC_APP_DIR` | parent of `control/` | Folder with the compose file and scripts |
 | `TKOC_HEALTH_URL` | `http://127.0.0.1:3400/api/health` | Game health check |
 | `TKOC_DB_CONTAINER` | `tkoc_db` | Database container name for logs and stats |
+| `CONTROL_AUTOHEAL` | on | `0` disables restarting an unhealthy game |
+
+## Auto-heal
+
+Docker marks the game unhealthy when its health check fails but never restarts
+it. The panel checks once a minute, and if `tkoc-web` is running but Docker
+reports it unhealthy twice in a row, it runs the Restart action as the user
+`auto-heal`, so it shows up in the action history. It leaves a stopped game
+alone, never interrupts another action such as an update, and waits at least
+15 minutes between automatic restarts.
 
 ## Security notes
 
