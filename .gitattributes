@@ -1,0 +1,2 @@
+# The server runs these files straight from this folder, so keep LF line endings on Windows too.
+* text=auto eol=lf
