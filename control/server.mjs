@@ -18,11 +18,12 @@
  *   COMPOSE_FILE             default compose.production.yaml
  *   TKOC_HEALTH_URL          default http://127.0.0.1:3400/api/health
  *   CONTROL_AUTOHEAL         default on; 0 disables restarting an unhealthy game
+ *   CONTROL_SESSION_DAYS     default 30; a session ends this long after its last use
  */
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -42,7 +43,7 @@ const config = {
   healthUrl: process.env.TKOC_HEALTH_URL || 'http://127.0.0.1:3400/api/health',
   secret: process.env.CONTROL_SESSION_SECRET || process.env.JWT_SECRET || '',
   databaseUrl: process.env.DATABASE_URL || '',
-  sessionSeconds: 12 * 60 * 60,
+  sessionSeconds: (Number(process.env.CONTROL_SESSION_DAYS) || 30) * 86400,
   containers: {
     web: 'tkoc-web',
     tick: 'tkoc-tick',
@@ -66,6 +67,14 @@ const ACTIONS = {
 };
 
 const page = readFileSync(path.join(here, 'page.html'), 'utf8');
+// The manifest, icons, and service worker that let a phone install the panel
+// as an app. They are small, so they are read once and served from memory.
+const STATIC_TYPES = { '.webmanifest': 'application/manifest+json', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const publicDir = path.join(here, 'public');
+const staticFiles = new Map((existsSync(publicDir) ? readdirSync(publicDir) : []).map(name => [`/${name}`, {
+  body: readFileSync(path.join(publicDir, name)),
+  type: STATIC_TYPES[path.extname(name)] || 'application/octet-stream',
+}]));
 // After a reboot Docker starts every container at once, ignoring depends_on,
 // so the panel can come up before MySQL. A pool created while MySQL is still
 // starting stays empty and never recovers: the panel could not sign anyone in
@@ -122,14 +131,29 @@ function sign(payload) {
   return createHmac('sha256', config.secret).update(payload).digest('base64url');
 }
 
+// A session is a signed cookie that lasts sessionSeconds after its last use
+// (handle reissues it), so an administrator stays signed in between visits.
+// Signing out revokes the cookie here until the panel restarts, and the
+// account behind it is re-checked against the database in accountAllows.
+const revokedSessions = new Map();
+
 function issueSession(user) {
+  const now = Math.floor(Date.now() / 1000);
   const payload = base64url(JSON.stringify({
     id: user.id,
     username: user.username,
-    exp: Math.floor(Date.now() / 1000) + config.sessionSeconds,
+    v: user.sessionVersion,
+    iat: now,
+    exp: now + config.sessionSeconds,
     nonce: randomBytes(8).toString('hex'),
   }));
   return `${payload}.${sign(payload)}`;
+}
+
+function revokeSession(session) {
+  const now = Date.now();
+  for (const [nonce, exp] of revokedSessions) if (exp < now) revokedSessions.delete(nonce);
+  revokedSessions.set(session.nonce, session.exp * 1000);
 }
 
 function readSession(request) {
@@ -143,6 +167,7 @@ function readSession(request) {
   try {
     const session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
     if (!session.exp || session.exp * 1000 < Date.now()) return null;
+    if (revokedSessions.has(session.nonce)) return null;
     return session;
   } catch {
     return null;
@@ -279,7 +304,7 @@ function parseJsonLines(text) {
 
 async function authenticate(username, password) {
   const rows = await pool.query(
-    'SELECT `userID`, `username`, `password`, `access`, `status` FROM `User` WHERE `username` = ? LIMIT 1',
+    'SELECT `userID`, `username`, `password`, `access`, `status`, `sessionVersion` FROM `User` WHERE `username` = ? LIMIT 1',
     [username],
   );
   const user = rows[0];
@@ -288,7 +313,30 @@ async function authenticate(username, password) {
   if (!ok) return { error: 'Invalid credentials' };
   if (user.status === 'Banned') return { error: 'This account is banned' };
   if (Number(user.access) !== 1) return { error: 'This account is not an administrator' };
-  return { user: { id: user.userID, username: user.username } };
+  return { user: { id: user.userID, username: user.username, sessionVersion: user.sessionVersion } };
+}
+
+// Long-lived sessions must stop working when the account behind them is
+// banned, loses admin access, or changes its password (the game bumps
+// sessionVersion then). The verdict is cached for a minute per user so
+// status polling does not query on every request, and while the database
+// is unreachable the signed cookie is trusted on its own, so the panel stays
+// usable during an outage.
+const accountChecks = new Map();
+
+async function accountAllows(session) {
+  const cached = accountChecks.get(session.id);
+  const verdict = check => check.allowed && check.version === session.v;
+  if (cached && Date.now() - cached.at < 60_000) return verdict(cached);
+  let check;
+  try {
+    const [user] = await pool.query('SELECT `access`, `status`, `sessionVersion` FROM `User` WHERE `userID` = ? LIMIT 1', [session.id]);
+    check = { at: Date.now(), allowed: Boolean(user) && user.status !== 'Banned' && Number(user.access) === 1, version: user?.sessionVersion };
+  } catch {
+    check = { ...(cached || { allowed: true, version: session.v }), at: Date.now() };
+  }
+  accountChecks.set(session.id, check);
+  return verdict(check);
 }
 
 // ---------------------------------------------------------------- jobs
@@ -514,6 +562,17 @@ async function handle(request, response) {
     return;
   }
 
+  if (request.method === 'GET' && staticFiles.has(url.pathname)) {
+    const file = staticFiles.get(url.pathname);
+    response.writeHead(200, {
+      'Content-Type': file.type,
+      'Cache-Control': file.type === 'image/png' ? 'public, max-age=86400' : 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    response.end(file.body);
+    return;
+  }
+
   if (request.method === 'POST' && url.pathname === '/api/login') {
     const ip = clientIp(request);
     const body = await readBody(request);
@@ -530,16 +589,23 @@ async function handle(request, response) {
     }
     if (outcome.error) return json(response, 401, { error: outcome.error });
     console.log(`[control] ${outcome.user.username} signed in from ${ip}`);
-    return json(response, 200, { user: outcome.user }, {
+    return json(response, 200, { user: { id: outcome.user.id, username: outcome.user.username } }, {
       'Set-Cookie': sessionCookie(request, issueSession(outcome.user), config.sessionSeconds),
     });
   }
 
   if (request.method === 'POST' && url.pathname === '/api/logout') {
+    if (session) revokeSession(session);
     return json(response, 200, { ok: true }, { 'Set-Cookie': sessionCookie(request, '', 0) });
   }
 
   if (!session) return json(response, 401, { error: 'Sign in required' });
+  if (!(await accountAllows(session))) return json(response, 401, { error: 'Sign in required' }, { 'Set-Cookie': sessionCookie(request, '', 0) });
+  // Keep the session alive: reissue the cookie once an hour while the panel
+  // is in use. The header set here goes out with whichever route answers.
+  if (Date.now() / 1000 - (session.iat || 0) > 3600) {
+    response.setHeader('Set-Cookie', sessionCookie(request, issueSession({ id: session.id, username: session.username, sessionVersion: session.v }), config.sessionSeconds));
+  }
 
   if (request.method === 'GET' && url.pathname === '/api/session') {
     return json(response, 200, { user: { id: session.id, username: session.username }, appDir: config.appDir, actions: Object.entries(ACTIONS).map(([id, action]) => ({ id, label: action.label, command: action.command.join(' ') })) });

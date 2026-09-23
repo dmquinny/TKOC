@@ -7,7 +7,8 @@ bcrypt password, access level 1), so it works whenever the database is up,
 even while the game itself is stopped or broken.
 
 The page has three tabs, a light and a dark theme (it follows the device
-until you pick one), and works on a phone.
+until you pick one), and works on a phone, where it can be installed as an
+app (see below).
 
 - **Overview**: a one-line verdict on the game (operational, degraded,
   stopped, action in progress), a card per container (web, tick, database,
@@ -69,6 +70,23 @@ cd control && npm ci --omit=dev
 TKOC_APP_DIR=/mnt/Apps/Apps/tkoc-modern node server.mjs
 ```
 
+## Installing on a phone
+
+The panel can be added to a phone's home screen, where it opens full
+screen like a native app and stays signed in between uses. On Android,
+Chrome shows an Install button in the panel's top bar (and offers to
+install from its own menu); on an iPhone or iPad, open the panel in
+Safari, tap Share, then Add to Home Screen. Chrome only offers to install
+sites it loads over HTTPS, so on Android use the panel's HTTPS address
+behind the reverse proxy rather than `http://<host>:3401`; Safari installs
+from either. If the panel cannot be reached, the installed app shows a
+message with a retry button instead of a browser error; nothing else is
+cached, so a rebuilt panel always loads fresh. The manifest, icons, and
+service worker live in `public/`. The icons are the game's emblem on a dark
+tile with a small power badge, built by `scripts/make-icons.mjs` in the
+repository root together with the game's own icons; run that again if the
+emblem changes.
+
 ## Configuration
 
 The panel reads `../appdata/tkoc-modern/.env.production` (or the file named
@@ -84,6 +102,7 @@ are required. Optional variables:
 | `TKOC_HEALTH_URL` | `http://127.0.0.1:3400/api/health` | Game health check |
 | `TKOC_DB_CONTAINER` | `tkoc_db` | Database container name for logs and stats |
 | `CONTROL_AUTOHEAL` | on | `0` disables restarting an unhealthy game |
+| `CONTROL_SESSION_DAYS` | `30` | Days a session stays valid after its last use |
 
 ## Auto-heal
 
@@ -99,6 +118,11 @@ alone, never interrupts another action such as an update, and waits at least
 The panel has Docker socket access, which is equivalent to root on the host.
 Keep it on the LAN or behind the same HTTPS reverse proxy as the game with
 access restricted to you. Sessions are HTTP-only, same-site cookies that
-expire after 12 hours; sign-in is rate limited to 10 attempts per 15 minutes
-per address and username; every action requires the custom request header
-the page sends, which blocks cross-site form posts.
+stay valid for 30 days after their last use (`CONTROL_SESSION_DAYS`), so an
+administrator stays signed in between visits. Signing out revokes the
+session, and the account is re-checked against the database once a minute,
+so banning it, removing its admin access, or changing its password (the game
+bumps `sessionVersion`) ends its panel sessions too. Sign-in is rate limited
+to 10 attempts per 15 minutes per address and username; every action
+requires the custom request header the page sends, which blocks cross-site
+form posts.

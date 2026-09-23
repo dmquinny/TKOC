@@ -12,6 +12,7 @@ ENV NODE_ENV=production
 COPY control/package.json control/package-lock.json ./
 RUN npm ci --omit=dev
 COPY control/server.mjs control/page.html ./
+COPY control/public ./public
 
 EXPOSE 3401
 # The docker CLI image's entrypoint rewrites any command that matches a docker
