@@ -103,6 +103,25 @@ npm run control:up        # docker compose -f ../docker-compose.yml up -d --buil
 Then open `http://<host>:3401`. Details and configuration are in
 [control/README.md](control/README.md).
 
+## Installing on a phone
+
+Both the game and the control panel can be added to a phone's home screen,
+where they open full screen under their own icon: on Android, Chrome offers
+to install a site it loads over HTTPS (the game also gets Chrome's install
+prompt; the panel shows an Install button); on an iPhone or iPad, open the
+site in Safari, tap Share, then Add to Home Screen. The game's manifest,
+icons, and offline page are `src/app/manifest.webmanifest`, `src/app/icon.png`,
+`src/app/apple-icon.png`, `src/app/favicon.ico`, `public/icons/`, and
+`public/sw.js`, registered by `src/components/RegisterServiceWorker.tsx`.
+The service worker caches nothing, so players always load the live game; it
+only shows a retry page when the server cannot be reached.
+
+All the icons are built from the game emblem by `scripts/make-icons.mjs`
+(after `npm install --no-save puppeteer-core`, run from the repository root,
+with `CHROME` pointing at a Chrome executable if it is not in the default
+place). Keep `src/app/favicon.ico` as that script writes it: the production
+build decodes it strictly and rejects entries that are not RGBA PNGs.
+
 Database migrations are forward-only. Backups are stored under
 `../appdata/tkoc-modern/backups` unless `BACKUP_DIR` is set.
 
